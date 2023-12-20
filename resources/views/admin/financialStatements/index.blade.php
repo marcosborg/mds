@@ -36,7 +36,7 @@
         class="btn btn-default {{ $driver_id == $d->id ? 'disabled selected' : '' }}" style="margin-top: 5px;">{{
         $d->name }}</a>
     @endforeach
-    
+
     <div class="row" style="margin-top: 5px;">
         <div class="col-md-6">
             <div class="panel panel-default">
@@ -207,12 +207,12 @@
                             </tr>
                             @endforeach
                             @if ($txt_admin > 0)
-                                <tr>
-                                    <th>Taxa administrativa</th>
-                                    <td></td>
-                                    <td>- {{ number_format($txt_admin, 2) }}€</td>
-                                    <td></td>
-                                </tr>
+                            <tr>
+                                <th>Taxa administrativa</th>
+                                <td></td>
+                                <td>- {{ number_format($txt_admin, 2) }}€</td>
+                                <td></td>
+                            </tr>
                             @endif
                             <tr>
                                 <th>Totais</th>
@@ -226,16 +226,20 @@
                     </table>
                 </div>
             </div>
+            @if ($driver_id)
             <div class="panel panel-default">
                 <div class="panel-body">
                     <h3 class="pull-left">Valor a pagar: <span style="font-weight: 800;">{{
                             number_format($final_total, 2) }}</span>€</h3>
-                            <div class="pull-right">
-                                <a target="_new" href="/admin/financial-statements/pdf" class="btn btn-primary"><i class="fa fa-file-pdf-o"></i></a>
-                                <a href="/admin/financial-statements/pdf/1" class="btn btn-primary"><i class="fa fa-cloud-download"></i></a>
-                            </div>
+                    <div class="pull-right">
+                        <a target="_new" href="/admin/financial-statements/pdf" class="btn btn-primary"><i
+                                class="fa fa-file-pdf-o"></i></a>
+                        <a href="/admin/financial-statements/pdf/1" class="btn btn-primary"><i
+                                class="fa fa-cloud-download"></i></a>
+                    </div>
                 </div>
             </div>
+            @endif
         </div>
     </div>
     <div class="row">
