@@ -84,6 +84,7 @@ class FinancialStatementController extends Controller
             ->where('tvde_month_id', $tvde_month_id)->get();
 
         $drivers = Driver::where('company_id', $company_id)
+            ->orderBy('name')
             ->where('state_id', 1)
             ->get();
         if ($driver_id != 0) {
@@ -528,6 +529,58 @@ class FinancialStatementController extends Controller
             $txt_admin = 0;
         }
 
+        //GRAFICOS
+
+        $drivers = Driver::where('company_id', $company_id)->get();
+
+        $team_earnings = collect();
+
+        foreach ($drivers as $key => $d) {
+            $team_driver_bolt_earnings = TvdeActivity::where([
+                'tvde_week_id' => $tvde_week_id,
+                'tvde_operator_id' => 2,
+                'driver_code' => $d->bolt_name
+            ])
+                ->get()->sum('earnings_two');
+
+            $team_driver_uber_earnings = TvdeActivity::where([
+                'tvde_week_id' => $tvde_week_id,
+                'tvde_operator_id' => 1,
+                'driver_code' => $d->uber_uuid
+            ])
+                ->get()->sum('earnings_two');
+
+            $team_driver_earnings = $team_driver_bolt_earnings + $team_driver_uber_earnings;
+            if ($driver) {
+                $entry = collect([
+                    'driver' => $driver->uber_uuid == $d->uber_uuid || $driver->bolt_name == $d->bolt_name ? $driver->name : 'Motorista ' . $key + 1,
+                    'earnings' => sprintf("%.2f", $team_driver_earnings),
+                    'own' => $driver->uber_uuid == $d->uber_uuid || $driver->bolt_name == $d->bolt_name
+                ]);
+                $team_earnings->add($entry);
+            }
+
+            $labels = [];
+            $earnings = [];
+            $backgrounds = [];
+
+            foreach ($team_earnings as $entry) {
+                $labels[] = $entry['driver'];
+                $earnings[] = $entry['earnings'];
+                if ($entry['own']) {
+                    $backgrounds[] = '#605ca8';
+                } else {
+                    $backgrounds[] = '#00a65a94';
+                }
+            }
+
+        }
+
+        $chart1 = "https://quickchart.io/chart?c={type:'bar',data:{labels:" . json_encode($labels) . ",datasets:[{borderWidth: 1, label:'Valor faturado',data:" . json_encode($earnings) . "}]}}";
+        $chart2 = "https://quickchart.io/chart?c={type:'doughnut',data:{labels:['UBER', 'BOLT', 'GORJETAS'],datasets:[{label: 'Valor faturado', data: [" . $total_earnings_uber . ", " . $total_earnings_bolt . ", " . $total_tips . "]}]}}";
+
+        /*
+
         /*
 
         return view('admin.financialStatements.pdf', compact([
@@ -564,7 +617,9 @@ class FinancialStatementController extends Controller
             'combustion_expenses',
             'combustion_racio',
             'electric_racio',
-            'total_earnings_after_vat'
+            'total_earnings_after_vat',
+            'chart1',
+            'chart2'
         ]));
 
         */
@@ -605,6 +660,8 @@ class FinancialStatementController extends Controller
             'electric_racio' => $electric_racio,
             'total_earnings_after_vat' => $total_earnings_after_vat,
             'txt_admin' => $txt_admin,
+            'chart1' => $chart1,
+            'chart2' => $chart2,
         ])->setOption([
                     'isRemoteEnabled' => true,
                 ]);
