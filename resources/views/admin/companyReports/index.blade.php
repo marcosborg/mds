@@ -36,6 +36,7 @@
 @endsection
 @section('scripts')
 @parent
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     validateData = () => {
         const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked:not(:disabled)');
@@ -59,7 +60,30 @@
                 location.reload();
             },
             error: (error) => {
+                location.reload();
+            }
+        });
+    }
+
+    revalidateData = (driver_id, tvde_week_id) => {
+        let data = {
+            driver_id: driver_id,
+            tvde_week_id: tvde_week_id
+        };
+        $.post({
+            url: '/admin/company-reports/revalidate-data',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            data: data,
+            success: (resp) => {
+                Swal.fire('Atualizado com sucesso').then(() => {
+                    location.reload();
+                });
+            },
+            error: (error) => {
                 console.log(error);
+                location.reload();
             }
         });
     }
@@ -166,6 +190,7 @@
                         <th style="text-align: right;">P. frota</th>
                         <th style="text-align: right">A pagar</th>
                         <th style="text-align: right">Validar</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -200,6 +225,13 @@
                                         class="glyphicon glyphicon-ok green-checkmark {{ $driver->current_account ? 'verified' : 'unverified' }}"></span>
                                 </label>
                             </div>
+                        </td>
+                        <td style="text-align: right;">
+                            @if ($driver->current_account)
+                            <button class="btn btn-sm" onclick="revalidateData({{ $driver->id }}, {{ $tvde_week_id }})">
+                                <i class="fa-fw fas fa-sync-alt"></i>
+                            </button>
+                            @endif
                         </td>
                     </tr>
                     @endif

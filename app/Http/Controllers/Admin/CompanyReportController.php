@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Company;
+use App\Models\Driver;
 use App\Models\TvdeMonth;
 use App\Models\TvdeWeek;
 use App\Models\TvdeYear;
@@ -72,6 +74,40 @@ class CompanyReportController extends Controller
             $driver_balance->balance = $last_balance ? $last_balance->balance + $data['final_total'] : $data['final_total'];
             $driver_balance->save();
         }
+    }
+
+    public function revalidateData(Request $request)
+    {
+        $driver_id = $request->driver_id;
+        $company_id = Driver::find($driver_id)->company_id;
+        $tvde_week_id = $request->tvde_week_id;
+
+        $data = $this->getDriverWeekReport($driver_id, $company_id, $tvde_week_id);
+
+        $current_account = CurrentAccount::where([
+            'tvde_week_id' => $tvde_week_id,
+            'driver_id' => $driver_id
+        ])->first();
+        $current_account->data = json_encode($data);
+        $current_account->save();
+
+        DriversBalance::where([
+            'tvde_week_id' => $tvde_week_id,
+            'driver_id' => $driver_id
+        ])->delete();
+
+        $last_balance = DriversBalance::where([
+            'driver_id' => $data['driver']['id'],
+        ])
+            ->orderBy('tvde_week_id', 'desc')->first();
+
+        $driver_balance = new DriversBalance;
+        $driver_balance->driver_id = $driver_id;
+        $driver_balance->tvde_week_id = $tvde_week_id;
+        $driver_balance->value = $data['final_total'];
+        $driver_balance->balance = $last_balance ? $last_balance->balance + $data['final_total'] : $data['final_total'];
+        $driver_balance->save();
+
     }
 
 }
