@@ -200,8 +200,7 @@
                                 <th style="text-align: left;">Ganhos</th>
                                 <td style="text-align: right;">{{ $total_earnings_no_tip }}€</td>
                                 @if ($driver)
-                                <td style="text-align: right;">- {{ $total_earnings_no_tip - $total_earnings_after_vat
-                                    }}€</td>
+                                <td style="text-align: right;">- {{ number_format($total_earnings_no_tip - $total_earnings_after_vat, 2) }}€</td>
                                 <td style="text-align: right;">{{ number_format($total_earnings_after_vat, 2) }}€</td>
                                 @endif
                             </tr>
