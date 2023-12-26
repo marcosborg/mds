@@ -194,6 +194,19 @@ trait Reports
 
                 $total_company_adjustments[] = array_sum($company_expense);
 
+                $driver->refunds = $refunds;
+                $driver->adjustments = $adjustments;
+                $driver->fleet_management = $fleet_management;
+
+                $driver->total = $earnings_after_discount + $tips_after_discount - $fuel_transactions + $adjustments - $fleet_management;
+
+                if ($driver && $driver->contract_vat->percent && $driver->contract_vat->percent > 0 && $driver->total > 0) {
+                    $txt_admin = ($driver->total * $driver->contract_vat->percent) / 100;
+                    $driver->total = $driver->total - $txt_admin;
+                } else {
+                    $txt_admin = 0;
+                }
+
                 $earnings = collect([
                     'uber' => $uber,
                     'bolt' => $bolt,
@@ -204,14 +217,10 @@ trait Reports
                     'total_no_tips' => $total_earnings_no_tips,
                     'earnings_after_discount' => $earnings_after_discount,
                     'tips_after_discount' => $tips_after_discount,
+                    'txt_admin' => $txt_admin,
                 ]);
 
                 $driver->earnings = $earnings;
-                $driver->refunds = $refunds;
-                $driver->adjustments = $adjustments;
-                $driver->fleet_management = $fleet_management;
-
-                $driver->total = $earnings_after_discount + $tips_after_discount - $fuel_transactions + $adjustments - $fleet_management;
 
                 $total_uber[] = $uber_total_earnings;
                 $total_bolt[] = $bolt_total_earnings;
@@ -427,7 +436,7 @@ trait Reports
             }
         }
 
-        if ($driver && $driver->contract_vat->percent && $driver->contract_vat->percent > 0) {
+        if ($driver && $driver->contract_vat->percent && $driver->contract_vat->percent > 0 && $final_total > 0) {
             $txt_admin = ($final_total * $driver->contract_vat->percent) / 100;
             $gross_debts = $gross_debts + $txt_admin;
             $final_total = $final_total - $txt_admin;
