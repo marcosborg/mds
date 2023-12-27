@@ -479,7 +479,7 @@ class FinancialStatementController extends Controller
             }
         }
 
-        if ($driver->contract_vat->percent && $driver->contract_vat->percent > 0) {
+        if ($driver->contract_vat->percent && $driver->contract_vat->percent > 0 && $final_total > 0) {
             $txt_admin = ($final_total * $driver->contract_vat->percent) / 100;
             $gross_debts = $gross_debts + $txt_admin;
             $final_total = $final_total - $txt_admin;
