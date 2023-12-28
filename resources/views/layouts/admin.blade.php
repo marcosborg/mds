@@ -67,7 +67,7 @@
 
                 <div class="navbar-custom-menu">
                     <ul class="nav navbar-nav">
-                        @if (auth()->user()->hasRole('Admin'))
+                        @if (auth()->user()->hasRole('Admin') || auth()->user()->hasRole('owner'))
                         <li class="nav-item" style="padding-top: 8px;">
                             <select class="form-control select2" style="min-width: 200px;"
                                 onchange="selectCompany(this.value)" autocomplete="off">
