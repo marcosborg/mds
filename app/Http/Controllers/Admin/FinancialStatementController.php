@@ -14,7 +14,6 @@ use App\Models\ElectricTransaction;
 use App\Models\TvdeActivity;
 use App\Models\TvdeMonth;
 use App\Models\TvdeWeek;
-use App\Models\TvdeYear;
 use Gate;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
