@@ -536,7 +536,7 @@ trait Reports
 
         $tvde_week = TvdeWeek::find($tvde_week_id);
 
-        $drivers = Driver::where('company_id', $company_id)->orderBy('name')->get();
+        $drivers = Driver::where('company_id', $company_id)->where('state_id', 1)->orderBy('name')->get();
 
         return [
             'company_id' => $company_id,

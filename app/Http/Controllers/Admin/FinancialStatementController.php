@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Http\Controllers\Traits\Reports;
+use Auth;
 
 class FinancialStatementController extends Controller
 {
@@ -43,6 +44,16 @@ class FinancialStatementController extends Controller
         $tvde_month_id = $filter['tvde_month_id'];
         $tvde_weeks = $filter['tvde_weeks'];
         $drivers = $filter['drivers'];
+
+        if (Gate::allows('owner_access')) {
+            $drivers = Driver::where('company_id', $company_id)
+                ->where('state_id', 1)
+                ->whereHas('user', function ($user) {
+                    $user->where('id', Auth::id());
+                })
+                ->orderBy('name')
+                ->get()->load('user');
+        }
 
         if ($driver_id != 0) {
             $driver = Driver::find($driver_id)->load([
