@@ -77,7 +77,6 @@ table.dataTable thead .sorting_desc {
 }
 
 @media ((max-width: 767px)) {
-
     .sidebar-menu,
     .main-sidebar .user-panel,
     .sidebar-menu>li.header {
