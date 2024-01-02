@@ -101,7 +101,6 @@ class FinancialStatementController extends Controller
         $adjustments = Adjustment::whereHas('drivers', function ($query) use ($driver_id) {
             $query->where('id', $driver_id);
         })
-            ->where('company_id', $company_id)
             ->where(function ($query) use ($tvde_week) {
                 $query->where('start_date', '<=', $tvde_week->start_date)
                     ->orWhereNull('start_date');
@@ -208,20 +207,30 @@ class FinancialStatementController extends Controller
         $electric_racio = null;
         $combustion_racio = null;
 
-        if ($electric_expenses && $total_earnings > 0) {
+        if ($electric_expenses) {
             $final_total = $final_total - $electric_expenses['value'];
             $gross_debts = $gross_debts + $electric_expenses['value'];
             if ($electric_expenses['value'] > 0) {
-                $electric_racio = ($electric_expenses['value'] / $total_earnings) * 100;
+                if ($total_earnings > 0) {
+                    $electric_racio = ($electric_expenses['value'] / $total_earnings > 0) * 100;
+                } else {
+                    $electric_racio = 0;
+                }
+
             } else {
                 $electric_racio = 0;
             }
         }
-        if ($combustion_expenses && $total_earnings > 0) {
+        if ($combustion_expenses) {
             $final_total = $final_total - $combustion_expenses['value'];
             $gross_debts = $gross_debts + $combustion_expenses['value'];
             if ($combustion_expenses['value'] > 0) {
-                $combustion_racio = ($combustion_expenses['value'] / $total_earnings) * 100;
+                if ($total_earnings > 0) {
+                    $combustion_racio = ($combustion_expenses['value'] / $total_earnings) * 100;
+                } else {
+                    $combustion_racio = 0;
+                }
+
             } else {
                 $combustion_racio = 0;
             }
@@ -470,20 +479,28 @@ class FinancialStatementController extends Controller
         $electric_racio = null;
         $combustion_racio = null;
 
-        if ($electric_expenses && $total_earnings > 0) {
+        if ($electric_expenses) {
             $final_total = $final_total - $electric_expenses['value'];
             $gross_debts = $gross_debts + $electric_expenses['value'];
             if ($electric_expenses['value'] > 0) {
-                $electric_racio = ($electric_expenses['value'] / $total_earnings) * 100;
+                if ($total_earnings > 0) {
+                    $electric_racio = ($electric_expenses['value'] / $total_earnings) * 100;
+                } else {
+                    $electric_racio = 0;
+                }
             } else {
                 $electric_racio = 0;
             }
         }
-        if ($combustion_expenses && $total_earnings > 0) {
+        if ($combustion_expenses) {
             $final_total = $final_total - $combustion_expenses['value'];
             $gross_debts = $gross_debts + $combustion_expenses['value'];
             if ($combustion_expenses['value'] > 0) {
-                $combustion_racio = ($combustion_expenses['value'] / $total_earnings) * 100;
+                if ($total_earnings > 0) {
+                    $combustion_racio = ($combustion_expenses['value'] / $total_earnings) * 100;
+                } else {
+                    $combustion_racio = 0;
+                }
             } else {
                 $combustion_racio = 0;
             }
