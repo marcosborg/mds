@@ -18,7 +18,7 @@ class TvdeWeekController extends Controller
     {
         abort_if(Gate::denies('tvde_week_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $tvdeWeeks = TvdeWeek::with(['tvde_month'])->get();
+        $tvdeWeeks = TvdeWeek::with(['tvde_month.year'])->get();
 
         return view('admin.tvdeWeeks.index', compact('tvdeWeeks'));
     }

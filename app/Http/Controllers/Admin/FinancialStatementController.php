@@ -20,6 +20,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Http\Controllers\Traits\Reports;
 use Auth;
+use Carbon\Carbon;
+use App\Models\TvdeYear;
 
 class FinancialStatementController extends Controller
 {
@@ -320,8 +322,26 @@ class FinancialStatementController extends Controller
 
     public function year($tvde_year_id)
     {
+
+        $currentYear = Carbon::now()->year;
+        $currentMonth = Carbon::now()->month;
+
+        $year = TvdeYear::find($tvde_year_id);
+
         session()->put('tvde_year_id', $tvde_year_id);
-        session()->put('tvde_month_id', TvdeMonth::orderBy('number', 'desc')->where('year_id', session()->get('tvde_year_id'))->first()->id);
+
+        if ($year->name == $currentYear) {
+            $month = TvdeMonth::where([
+                'year_id' => $tvde_year_id,
+                'number' => $currentMonth
+            ])->first();
+        } else {
+            $month = TvdeMonth::where([
+                'year_id' => $tvde_year_id
+            ])->orderBy('number', 'desc')->first();
+        }
+
+        session()->put('tvde_month_id', $month->id);
         session()->put('tvde_week_id', TvdeWeek::orderBy('number', 'desc')->where('tvde_month_id', session()->get('tvde_month_id'))->first()->id);
         return back();
     }
