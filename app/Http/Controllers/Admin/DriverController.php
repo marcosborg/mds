@@ -20,6 +20,7 @@ use Gate;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Yajra\DataTables\Facades\DataTables;
+use App\Models\TollCard;
 
 class DriverController extends Controller
 {
@@ -73,6 +74,10 @@ class DriverController extends Controller
 
             $table->addColumn('electric_code', function ($row) {
                 return $row->electric ? $row->electric->code : '';
+            });
+
+            $table->addColumn('tool_card_code', function ($row) {
+                return $row->tool_card ? $row->tool_card->code : '';
             });
 
             $table->addColumn('local_name', function ($row) {
@@ -181,7 +186,9 @@ class DriverController extends Controller
 
         $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
-        return view('admin.drivers.create', compact('cards', 'companies', 'contract_types', 'contract_vats', 'electrics', 'locals', 'states', 'users'));
+        $tool_cards = TollCard::pluck('code', 'id')->prepend(trans('global.pleaseSelect'), '');
+
+        return view('admin.drivers.create', compact('cards', 'companies', 'contract_types', 'contract_vats', 'electrics', 'tool_cards', 'locals', 'states', 'users'));
     }
 
     public function store(StoreDriverRequest $request)
@@ -211,9 +218,11 @@ class DriverController extends Controller
 
         $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
-        $driver->load('user', 'card', 'electric', 'local', 'contract_type', 'contract_vat', 'state', 'company');
+        $driver->load('user', 'card', 'electric', 'tool_card', 'local', 'contract_type', 'contract_vat', 'state', 'company');
 
-        return view('admin.drivers.edit', compact('cards', 'companies', 'contract_types', 'contract_vats', 'driver', 'electrics', 'locals', 'states', 'users'));
+        $tool_cards = TollCard::pluck('code', 'id')->prepend(trans('global.pleaseSelect'), '');
+
+        return view('admin.drivers.edit', compact('cards', 'companies', 'contract_types', 'contract_vats', 'driver', 'electrics', 'tool_cards', 'locals', 'states', 'users'));
     }
 
     public function update(UpdateDriverRequest $request, Driver $driver)

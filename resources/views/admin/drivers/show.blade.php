@@ -67,6 +67,14 @@
                                 </tr>
                                 <tr>
                                     <th>
+                                        {{ trans('cruds.driver.fields.tool_card') }}
+                                    </th>
+                                    <td>
+                                        {{ $driver->tool_card->code ?? '' }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>
                                         {{ trans('cruds.driver.fields.local') }}
                                     </th>
                                     <td>

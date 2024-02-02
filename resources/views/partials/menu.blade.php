@@ -341,6 +341,17 @@
                         </a>
                     </li>
                     @endcan
+                    @can('team_access')
+                            <li class="{{ request()->is("admin/teams") || request()->is("admin/teams/*") ? "active" : "" }}">
+                                <a href="{{ route("admin.teams.index") }}">
+                                    <i class="fa-fw fas fa-users">
+
+                                    </i>
+                                    <span>{{ trans('cruds.team.title') }}</span>
+
+                                </a>
+                            </li>
+                        @endcan
                 </ul>
             </li>
             @endcan
