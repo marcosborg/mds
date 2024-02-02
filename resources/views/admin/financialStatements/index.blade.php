@@ -421,3 +421,4 @@
     });
 </script>
 @endsection
+<script>{!! $drivers !!}</script>
