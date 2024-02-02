@@ -464,6 +464,16 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'namespace' => 'Admin', 'mi
     Route::delete('drivers-balances/destroy', 'DriversBalanceController@massDestroy')->name('drivers-balances.massDestroy');
     Route::resource('drivers-balances', 'DriversBalanceController');
 
+    // Toll Payment
+    Route::delete('toll-payments/destroy', 'TollPaymentController@massDestroy')->name('toll-payments.massDestroy');
+    Route::post('toll-payments/parse-csv-import', 'TollPaymentController@parseCsvImport')->name('toll-payments.parseCsvImport');
+    Route::post('toll-payments/process-csv-import', 'TollPaymentController@processCsvImport')->name('toll-payments.processCsvImport');
+    Route::resource('toll-payments', 'TollPaymentController');
+
+    // Toll Card
+    Route::delete('toll-cards/destroy', 'TollCardController@massDestroy')->name('toll-cards.massDestroy');
+    Route::resource('toll-cards', 'TollCardController');
+
 });
 Route::group(['prefix' => 'profile', 'as' => 'profile.', 'namespace' => 'Auth', 'middleware' => ['auth']], function () {
     // Change password
