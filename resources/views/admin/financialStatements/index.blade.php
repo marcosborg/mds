@@ -202,7 +202,7 @@
                             <tr>
                                 <th>Portagens</th>
                                 <td></td>
-                                <td>{{ number_format($toll_payments->sum('total'), 2) }}€</td>
+                                <td>- {{ number_format($toll_payments->sum('total'), 2) }}€</td>
                                 <td></td>
                             </tr>
                             @endif

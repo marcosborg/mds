@@ -228,9 +228,17 @@
                                 <th style="text-align: left;">Abastecimento combustivel</th>
                                 <td></td>
                                 @if ($driver)
-                                <td style="text-align: right;">- {{ $combustion_expenses['total'] }}</td>
+                                <td style="text-align: right;">- {{ $combustion_expenses['total'] }}€</td>
                                 <td></td>
                                 @endif
+                            </tr>
+                            @endif
+                            @if ($toll_payments)
+                            <tr>
+                                <th style="text-align: left;">Portagens</th>
+                                <td></td>
+                                <td style="text-align: right;">- {{ number_format($toll_payments->sum('total'), 2) }}€</td>
+                                <td></td>
                             </tr>
                             @endif
                             @foreach ($adjustments as $adjustment)
