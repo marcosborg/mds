@@ -22,6 +22,8 @@ use App\Http\Controllers\Traits\Reports;
 use Auth;
 use Carbon\Carbon;
 use App\Models\TvdeYear;
+use App\Models\TollCard;
+use App\Models\TollPayment;
 
 class FinancialStatementController extends Controller
 {
@@ -163,6 +165,18 @@ class FinancialStatementController extends Controller
             ]);
         }
 
+        // TOLL EXPENSES
+
+        $toll_expenses = null;
+        if ($driver && $driver->tool_card_id) {
+            $toll_card = TollCard::find($driver->tool_card_id);
+            $toll_payments = TollPayment::where([
+                'card' => $toll_card->code,
+                'tvde_week_id' => $tvde_week_id
+            ])->get();
+            //return $toll_payments;
+        }
+
         $total_earnings_bolt = number_format($bolt_activities->sum('earnings_two') - $bolt_activities->sum('earnings_one'), 2);
         $total_tips_bolt = number_format($bolt_activities->sum('earnings_one'), 2);
         $total_earnings_uber = number_format($uber_activities->sum('earnings_two') - $uber_activities->sum('earnings_one'), 2);
@@ -218,7 +232,6 @@ class FinancialStatementController extends Controller
                 } else {
                     $electric_racio = 0;
                 }
-
             } else {
                 $electric_racio = 0;
             }
@@ -232,7 +245,6 @@ class FinancialStatementController extends Controller
                 } else {
                     $combustion_racio = 0;
                 }
-
             } else {
                 $combustion_racio = 0;
             }
@@ -578,7 +590,6 @@ class FinancialStatementController extends Controller
                     $backgrounds[] = '#00a65a94';
                 }
             }
-
         }
 
         $chart1 = "https://quickchart.io/chart?c={type:'bar',data:{labels:" . json_encode($labels) . ",datasets:[{borderWidth: 1, label:'Valor faturado',data:" . json_encode($earnings) . "}]}}";
@@ -668,8 +679,8 @@ class FinancialStatementController extends Controller
             'chart1' => $chart1,
             'chart2' => $chart2,
         ])->setOption([
-                    'isRemoteEnabled' => true,
-                ]);
+            'isRemoteEnabled' => true,
+        ]);
 
 
         if ($request->download) {
@@ -680,7 +691,5 @@ class FinancialStatementController extends Controller
         } else {
             return $pdf->stream();
         }
-
     }
-
 }
