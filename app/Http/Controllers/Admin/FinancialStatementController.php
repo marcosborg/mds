@@ -167,14 +167,13 @@ class FinancialStatementController extends Controller
 
         // TOLL EXPENSES
 
-        $toll_expenses = null;
+        $toll_payments = null;
         if ($driver && $driver->tool_card_id) {
             $toll_card = TollCard::find($driver->tool_card_id);
             $toll_payments = TollPayment::where([
                 'card' => $toll_card->code,
                 'tvde_week_id' => $tvde_week_id
             ])->get();
-            //return $toll_payments;
         }
 
         $total_earnings_bolt = number_format($bolt_activities->sum('earnings_two') - $bolt_activities->sum('earnings_one'), 2);
@@ -248,6 +247,11 @@ class FinancialStatementController extends Controller
             } else {
                 $combustion_racio = 0;
             }
+        }
+
+        if($toll_payments){
+            $final_total = $final_total - $toll_payments->sum('total');
+            $gross_debts = $gross_debts + $toll_payments->sum('total');
         }
 
         if ($driver && $driver->contract_vat->percent && $driver->contract_vat->percent > 0 && $final_total > 0) {
@@ -328,7 +332,8 @@ class FinancialStatementController extends Controller
             'combustion_racio',
             'electric_racio',
             'total_earnings_after_vat',
-            'txt_admin'
+            'txt_admin',
+            'toll_payments'
         ]));
     }
 

@@ -198,6 +198,14 @@
                                 @endif
                             </tr>
                             @endif
+                            @if ($toll_payments)
+                            <tr>
+                                <th>Portagens</th>
+                                <td></td>
+                                <td>{{ number_format($toll_payments->sum('total'), 2) }}€</td>
+                                <td></td>
+                            </tr>
+                            @endif
                             @foreach ($adjustments as $adjustment)
                             <tr>
                                 <th>{{ $adjustment->name }}</th>
@@ -421,4 +429,6 @@
     });
 </script>
 @endsection
-<script>{!! $drivers !!}</script>
+<script>
+    console.log({!! $toll_payments !!})
+</script>
