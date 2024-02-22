@@ -49,14 +49,20 @@ class FinancialStatementController extends Controller
         $tvde_weeks = $filter['tvde_weeks'];
         $drivers = $filter['drivers'];
 
-        if (Gate::allows('owner_access')) {
-            $drivers = Driver::where('company_id', $company_id)
-                ->where('state_id', 1)
-                ->whereHas('user', function ($user) {
-                    $user->where('id', Auth::id());
-                })
-                ->orderBy('name')
-                ->get()->load('user');
+        $user = auth()->user();
+
+        if ($user->hasRole('driver') && !$user->hasRole('owner')) {
+            $drivers = Driver::where('driver_id', session()->get('user_id'));
+        } else if ($user->hasRole('owner') && !$user->hasRole('admin')) {
+            if (Gate::allows('owner_access')) {
+                $drivers = Driver::where('company_id', $company_id)
+                    ->where('state_id', 1)
+                    ->whereHas('user', function ($user) {
+                        $user->where('id', Auth::id());
+                    })
+                    ->orderBy('name')
+                    ->get()->load('user');
+            }
         }
 
         if ($driver_id != 0) {
@@ -249,7 +255,7 @@ class FinancialStatementController extends Controller
             }
         }
 
-        if($toll_payments){
+        if ($toll_payments) {
             $final_total = $final_total - $toll_payments->sum('total');
             $gross_debts = $gross_debts + $toll_payments->sum('total');
         }
@@ -555,7 +561,7 @@ class FinancialStatementController extends Controller
             }
         }
 
-        if($toll_payments){
+        if ($toll_payments) {
             $final_total = $final_total - $toll_payments->sum('total');
             $gross_debts = $gross_debts + $toll_payments->sum('total');
         }
@@ -703,8 +709,8 @@ class FinancialStatementController extends Controller
             'chart2' => $chart2,
             'toll_payments' => $toll_payments
         ])->setOption([
-            'isRemoteEnabled' => true,
-        ]);
+                    'isRemoteEnabled' => true,
+                ]);
 
 
         if ($request->download) {

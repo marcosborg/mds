@@ -29,8 +29,10 @@
             }} a {{ \Carbon\Carbon::parse($tvde_week->end_date)->format('d') }}</a>
         @endforeach
     </div>
+    @if(auth()->user()->hasRole('admin'))
     <a href="/admin/financial-statements/driver/0"
         class="btn btn-default {{ $driver_id == null ? 'disabled selected' : '' }}" style="margin-top: 5px;">Todos</a>
+    @endif
     @foreach ($drivers as $d)
     <a href="/admin/financial-statements/driver/{{ $d->id }}"
         class="btn btn-default {{ $driver_id == $d->id ? 'disabled selected' : '' }}" style="margin-top: 5px;">{{
