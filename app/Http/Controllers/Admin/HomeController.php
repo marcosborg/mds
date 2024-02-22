@@ -18,7 +18,7 @@ class HomeController
 {
     public function index()
     {
-        return redirect('admin/financial-statements');
+        
     }
 
     public function selectCompany($company_id)
