@@ -152,6 +152,7 @@ class FinancialStatementController extends Controller
                 ]);
             }
         }
+
         $combustion_expenses = null;
         if ($driver && $driver->card_id) {
             $card = Card::find($driver->card_id);
@@ -233,7 +234,7 @@ class FinancialStatementController extends Controller
             $gross_debts = $gross_debts + $electric_expenses['value'];
             if ($electric_expenses['value'] > 0) {
                 if ($total_earnings > 0) {
-                    $electric_racio = ($electric_expenses['value'] / $total_earnings > 0) * 100;
+                    $electric_racio = ($electric_expenses['value'] / $total_earnings) * 100;
                 } else {
                     $electric_racio = 0;
                 }
