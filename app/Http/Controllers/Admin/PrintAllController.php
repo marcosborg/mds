@@ -76,6 +76,8 @@ class PrintAllController extends Controller
     public function alldrivers()
     {
 
+        set_time_limit(600);
+
         $company_id = session()->get('company_id');
         $tvde_week_id = session()->get('tvde_week_id');
 
