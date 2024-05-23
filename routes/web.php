@@ -478,6 +478,9 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'namespace' => 'Admin', 'mi
     Route::delete('teams/destroy', 'TeamController@massDestroy')->name('teams.massDestroy');
     Route::resource('teams', 'TeamController');
 
+    // Print All
+    Route::get('print-alls', 'PrintAllController@index');
+
 });
 Route::group(['prefix' => 'profile', 'as' => 'profile.', 'namespace' => 'Auth', 'middleware' => ['auth']], function () {
     // Change password

@@ -317,7 +317,7 @@
         </tr>
     </table>
     <footer>
-        ExpertCom ©
+        MDS ©
         <?php echo date("Y");?>
     </footer>
 </body>

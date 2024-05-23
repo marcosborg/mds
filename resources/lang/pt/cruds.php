@@ -1803,5 +1803,9 @@ return [
             'deleted_at_helper' => ' ',
         ],
     ],
+    'printAll' => [
+        'title'          => 'Print All',
+        'title_singular' => 'Print All',
+    ],
 
 ];
