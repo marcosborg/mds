@@ -251,7 +251,7 @@
             </div>
             @else
             <div style="margin-bottom: 20px; text-align: right;">
-                <a href="/admin/print-alls" class="btn btn-primary" onclick="return confirm('Este processo pode demorar vários minutos. Aguarde até a operação estar concluida.')"><i class="fa fa-file-pdf-o"></i> Imprimir todos</a>
+                <a href="/admin/print-alls" class="btn btn-primary"><i class="fa fa-file-pdf-o"></i> Imprimir todos</a>
             </div>
             @endif
         </div>
