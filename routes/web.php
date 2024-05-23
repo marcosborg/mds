@@ -479,7 +479,12 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'namespace' => 'Admin', 'mi
     Route::resource('teams', 'TeamController');
 
     // Print All
-    Route::get('print-alls', 'PrintAllController@index');
+    Route::prefix('print-alls')->group(function () {
+        Route::get('/', 'PrintAllController@index');
+        Route::get('/driver/{driver_id}', 'PrintAllController@driver');
+        Route::get('/alldrivers', 'PrintAllController@alldrivers');
+    });
+
 
 });
 Route::group(['prefix' => 'profile', 'as' => 'profile.', 'namespace' => 'Auth', 'middleware' => ['auth']], function () {
