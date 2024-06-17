@@ -38,6 +38,11 @@ class FinancialStatementController extends Controller
 
         $driver_id = session()->get('driver_id') ? session()->get('driver_id') : $driver_id = 0;
 
+        if (!auth()->user()->hasRole('Admin') && $driver_id == 0) {
+            $driver_id = Driver::where('user_id', auth()->user()->id)->first()->id;
+            session()->put('driver_id', $driver_id);
+        } 
+
         $filter = $this->filter();
         $company_id = $filter['company_id'];
         $tvde_week_id = $filter['tvde_week_id'];
