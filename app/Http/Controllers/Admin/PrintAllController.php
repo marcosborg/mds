@@ -220,6 +220,12 @@ class PrintAllController extends Controller
         $total_bolt = number_format(($bolt_activities->sum('earnings_two') - $bolt_activities->sum('earnings_one')) * ($contract_type_rank ? $contract_type_rank->percent / 100 : 0), 2);
         $total_uber = number_format(($uber_activities->sum('earnings_two') - $uber_activities->sum('earnings_one')) * ($contract_type_rank ? $contract_type_rank->percent / 100 : 0), 2);
 
+        $total_bolt = isset($total_bolt) && is_numeric($total_bolt) ? $total_bolt : 0;
+        $total_uber = isset($total_uber) && is_numeric($total_uber) ? $total_uber : 0;
+
+        $total_earnings_after_vat = $total_bolt + $total_uber;
+
+
         $total_earnings_after_vat = $total_bolt + $total_uber;
 
         $bolt_tip_percent = $driver ? 100 - $driver->contract_vat->tips : 100;
