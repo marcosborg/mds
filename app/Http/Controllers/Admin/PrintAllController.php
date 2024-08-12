@@ -223,10 +223,7 @@ class PrintAllController extends Controller
         $total_bolt = isset($total_bolt) && is_numeric($total_bolt) ? $total_bolt : 0;
         $total_uber = isset($total_uber) && is_numeric($total_uber) ? $total_uber : 0;
 
-        $total_earnings_after_vat = $total_bolt + $total_uber;
-
-
-        $total_earnings_after_vat = $total_bolt + $total_uber;
+        $total_earnings_after_vat = (is_numeric($total_bolt) ? $total_bolt : 0) + (is_numeric($total_uber) ? $total_uber : 0);
 
         $bolt_tip_percent = $driver ? 100 - $driver->contract_vat->tips : 100;
         $uber_tip_percent = $driver ? 100 - $driver->contract_vat->tips : 100;
