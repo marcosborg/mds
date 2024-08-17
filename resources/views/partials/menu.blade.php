@@ -352,7 +352,18 @@
                                 </a>
                             </li>
                         @endcan
-                </ul>
+                        @can('recorded_log_access')
+                        <li class="{{ request()->is("admin/recorded-logs") || request()->is("admin/recorded-logs/*") ? "active" : "" }}">
+                            <a href="{{ route("admin.recorded-logs.index") }}">
+                                <i class="fa-fw fas fa-save">
+
+                                </i>
+                                <span>{{ trans('cruds.recordedLog.title') }}</span>
+
+                            </a>
+                        </li>
+                    @endcan
+                    </ul>
             </li>
             @endcan
             @can('financial_statement_access')

@@ -485,6 +485,10 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'namespace' => 'Admin', 'mi
         Route::get('/alldrivers', 'PrintAllController@alldrivers');
     });
 
+    // Recorded Log
+    Route::delete('recorded-logs/destroy', 'RecordedLogController@massDestroy')->name('recorded-logs.massDestroy');
+    Route::resource('recorded-logs', 'RecordedLogController');
+    ROute::get('record-log/{tvde_week_id}/{driver_id}/{company_id}/{value}', 'RecordedLogController@recordLog');
 
 });
 Route::group(['prefix' => 'profile', 'as' => 'profile.', 'namespace' => 'Auth', 'middleware' => ['auth']], function () {

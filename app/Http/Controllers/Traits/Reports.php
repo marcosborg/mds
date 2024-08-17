@@ -14,6 +14,8 @@ use App\Models\Electric;
 use App\Models\Card;
 use App\Models\TvdeMonth;
 use App\Models\TvdeYear;
+use App\Models\TollCard;
+use App\Models\TollPayment;
 
 trait Reports
 {
@@ -548,6 +550,248 @@ trait Reports
             'tvde_month_id' => $tvde_month_id,
             'tvde_weeks' => $tvde_weeks,
             'drivers' => $drivers,
+        ];
+    }
+
+    public function getWeekResults($tvde_week_id, $driver_id, $company_id)
+    {
+
+        if ($driver_id != 0) {
+            $driver = Driver::find($driver_id)->load([
+                'contract_type',
+                'contract_vat'
+            ]);
+        } else {
+            $driver = null;
+        }
+
+        $tvde_week = TvdeWeek::find($tvde_week_id);
+
+        if ($driver_id == 0) {
+            $bolt_activities = TvdeActivity::where([
+                'tvde_week_id' => $tvde_week_id,
+                'tvde_operator_id' => 2,
+                'company_id' => $company_id,
+            ])
+                ->get();
+
+            $uber_activities = TvdeActivity::where([
+                'tvde_week_id' => $tvde_week_id,
+                'tvde_operator_id' => 1,
+                'company_id' => $company_id,
+            ])
+                ->get();
+        } else {
+            $bolt_activities = TvdeActivity::where([
+                'tvde_week_id' => $tvde_week_id,
+                'tvde_operator_id' => 2,
+                'driver_code' => $driver->bolt_name,
+                'company_id' => $company_id,
+            ])
+                ->get();
+
+            $uber_activities = TvdeActivity::where([
+                'tvde_week_id' => $tvde_week_id,
+                'tvde_operator_id' => 1,
+                'driver_code' => $driver->uber_uuid,
+                'company_id' => $company_id,
+            ])
+                ->get();
+        }
+
+        $adjustments = Adjustment::whereHas('drivers', function ($query) use ($driver_id) {
+            $query->where('id', $driver_id);
+        })
+            ->where(function ($query) use ($tvde_week) {
+                $query->where('start_date', '<=', $tvde_week->start_date)
+                    ->orWhereNull('start_date');
+            })
+            ->where(function ($query) use ($tvde_week) {
+                $query->where('end_date', '>=', $tvde_week->end_date)
+                    ->orWhereNull('end_date');
+            })
+            ->get();
+
+        $refund = 0;
+        $deduct = 0;
+
+        foreach ($adjustments as $adjustment) {
+            switch ($adjustment->type) {
+                case 'refund':
+                    $refund = $refund + $adjustment->amount;
+                    break;
+                case 'deduct':
+                    $deduct = $deduct + $adjustment->amount;
+                    break;
+            }
+        }
+
+        // FUEL EXPENSES
+
+        $electric_expenses = null;
+        if ($driver && $driver->electric_id) {
+            $electric = Electric::find($driver->electric_id);
+            if ($electric) {
+                $electric_transactions = ElectricTransaction::where([
+                    'card' => $electric->code,
+                    'tvde_week_id' => $tvde_week_id
+                ])->get();
+                $electric_expenses = collect([
+                    'amount' => number_format($electric_transactions->sum('amount'), 2, '.', '') . ' kWh',
+                    'total' => number_format($electric_transactions->sum('total'), 2, '.', '') . ' €',
+                    'value' => $electric_transactions->sum('total')
+                ]);
+            }
+        }
+
+        $combustion_expenses = null;
+        if ($driver && $driver->card_id) {
+            $card = Card::find($driver->card_id);
+            if (!$card) {
+                $code = 0;
+            } else {
+                $code = $card->code;
+            }
+            $combustion_transactions = CombustionTransaction::where([
+                'card' => $code,
+                'tvde_week_id' => $tvde_week_id
+            ])->get();
+            $combustion_expenses = collect([
+                'amount' => number_format($combustion_transactions->sum('amount'), 2, '.', '') . ' L',
+                'total' => number_format($combustion_transactions->sum('total'), 2, '.', '') . ' €',
+                'value' => $combustion_transactions->sum('total')
+            ]);
+        }
+
+        // TOLL EXPENSES
+
+        $toll_payments = null;
+        if ($driver && $driver->tool_card_id) {
+            $toll_card = TollCard::find($driver->tool_card_id);
+            $toll_payments = TollPayment::where([
+                'card' => $toll_card->code,
+                'tvde_week_id' => $tvde_week_id
+            ])->get();
+        }
+
+        $total_earnings_bolt = number_format($bolt_activities->sum('earnings_two') - $bolt_activities->sum('earnings_one'), 2);
+        $total_tips_bolt = number_format($bolt_activities->sum('earnings_one'), 2);
+        $total_earnings_uber = number_format($uber_activities->sum('earnings_two') - $uber_activities->sum('earnings_one'), 2);
+        $total_tips_uber = number_format($uber_activities->sum('earnings_one'), 2);
+        $total_tips = $total_tips_uber + $total_tips_bolt;
+        $total_earnings = $bolt_activities->sum('earnings_two') + $uber_activities->sum('earnings_two');
+        $total_earnings_no_tip = ($bolt_activities->sum('earnings_two') - $bolt_activities->sum('earnings_one')) + ($uber_activities->sum('earnings_two') - $uber_activities->sum('earnings_one'));
+
+        //CHECK PERCENT
+        $contract_type_ranks = $driver ? ContractTypeRank::where('contract_type_id', $driver->contract_type_id)->get() : [];
+        $contract_type_rank = count($contract_type_ranks) > 0 ? $contract_type_ranks[0] : null;
+        foreach ($contract_type_ranks as $value) {
+            if ($value->from <= $total_earnings && $value->to >= $total_earnings) {
+                $contract_type_rank = $value;
+            }
+        }
+
+        //
+
+        $total_bolt = ($bolt_activities->sum('earnings_two') - $bolt_activities->sum('earnings_one')) * ($contract_type_rank ? $contract_type_rank->percent / 100 : 0);
+        $total_uber = ($uber_activities->sum('earnings_two') - $uber_activities->sum('earnings_one')) * ($contract_type_rank ? $contract_type_rank->percent / 100 : 0);
+
+        $total_earnings_after_vat = $total_bolt + $total_uber;
+
+        $total_bolt = number_format(($bolt_activities->sum('earnings_two') - $bolt_activities->sum('earnings_one')) * ($contract_type_rank ? $contract_type_rank->percent / 100 : 0), 2);
+        $total_uber = number_format(($uber_activities->sum('earnings_two') - $uber_activities->sum('earnings_one')) * ($contract_type_rank ? $contract_type_rank->percent / 100 : 0), 2);
+
+        $bolt_tip_percent = $driver ? 100 - $driver->contract_vat->tips : 100;
+        $uber_tip_percent = $driver ? 100 - $driver->contract_vat->tips : 100;
+
+        $bolt_tip_after_vat = number_format($total_tips_bolt * ($bolt_tip_percent / 100), 2);
+        $uber_tip_after_vat = number_format($total_tips_uber * ($uber_tip_percent / 100), 2);
+
+        $total_tip_after_vat = $bolt_tip_after_vat + $uber_tip_after_vat;
+
+        $total = $total_earnings + $total_tips;
+        $total_after_vat = $total_earnings_after_vat + $total_tip_after_vat;
+
+        $gross_credits = $total_earnings_no_tip + $total_tips + $refund;
+        $gross_debts = ($total_earnings_no_tip - $total_earnings_after_vat) + ($total_tips - $total_tip_after_vat) + $deduct;
+
+        $final_total = $gross_credits - $gross_debts;
+
+        $electric_racio = null;
+        $combustion_racio = null;
+
+        if ($electric_expenses) {
+            $final_total = $final_total - $electric_expenses['value'];
+            $gross_debts = $gross_debts + $electric_expenses['value'];
+            if ($electric_expenses['value'] > 0) {
+                if ($total_earnings > 0) {
+                    $electric_racio = ($electric_expenses['value'] / $total_earnings) * 100;
+                } else {
+                    $electric_racio = 0;
+                }
+            } else {
+                $electric_racio = 0;
+            }
+        }
+        if ($combustion_expenses) {
+            $final_total = $final_total - $combustion_expenses['value'];
+            $gross_debts = $gross_debts + $combustion_expenses['value'];
+            if ($combustion_expenses['value'] > 0) {
+                if ($total_earnings > 0) {
+                    $combustion_racio = ($combustion_expenses['value'] / $total_earnings) * 100;
+                } else {
+                    $combustion_racio = 0;
+                }
+            } else {
+                $combustion_racio = 0;
+            }
+        }
+
+        if ($toll_payments) {
+            $final_total = $final_total - $toll_payments->sum('total');
+            $gross_debts = $gross_debts + $toll_payments->sum('total');
+        }
+
+        if ($driver && $driver->contract_vat->percent && $driver->contract_vat->percent > 0 && $final_total > 0) {
+            $txt_admin = ($final_total * $driver->contract_vat->percent) / 100;
+            $gross_debts = $gross_debts + $txt_admin;
+            $final_total = $final_total - $txt_admin;
+        } else {
+            $txt_admin = 0;
+        }
+
+        return [
+            'bolt_activities' => $bolt_activities,
+            'uber_activities' => $uber_activities,
+            'total_earnings_uber' => $total_earnings_uber,
+            'contract_type_rank' => $contract_type_rank,
+            'total_uber' => $total_uber,
+            'total_earnings_bolt' => $total_earnings_bolt,
+            'total_bolt' => $total_bolt,
+            'total_tips_uber' => $total_tips_uber,
+            'uber_tip_percent' => $total_tips_uber,
+            'uber_tip_after_vat' => $uber_tip_after_vat,
+            'total_tips_bolt' => $total_tips_bolt,
+            'bolt_tip_percent' => $bolt_tip_percent,
+            'bolt_tip_after_vat' => $bolt_tip_after_vat,
+            'total_tips' => $total_tips,
+            'total_tip_after_vat' => $total_tip_after_vat,
+            'adjustments' => $adjustments,
+            'total_earnings' => $total_earnings,
+            'total_earnings_no_tip' => $total_earnings_no_tip,
+            'total' => $total,
+            'total_after_vat' => $total_after_vat,
+            'gross_credits' => $gross_credits,
+            'gross_debts' => $gross_debts,
+            'final_total' => $final_total,
+            'driver' => $driver,
+            'electric_expenses' => $electric_expenses,
+            'combustion_expenses' => $combustion_expenses,
+            'combustion_racio' => $combustion_racio,
+            'electric_racio' => $electric_racio,
+            'total_earnings_after_vat' => $total_earnings_after_vat,
+            'txt_admin' => $txt_admin,
+            'toll_payments' => $toll_payments
         ];
     }
 }

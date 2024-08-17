@@ -242,10 +242,15 @@
                     <h3 class="pull-left">Valor a pagar: <span style="font-weight: 800;">{{
                             number_format($final_total, 2) }}</span>€</h3>
                     <div class="pull-right">
-                        <a target="_new" href="/admin/financial-statements/pdf" class="btn btn-primary"><i
+                        <button class="btn btn-success"
+                            onclick="recordLog({{ $tvde_week_id }}, {{ $driver_id }}, {{ $company_id }}, {{ number_format($final_total, 2) }})"><i
+                                class="fa fa-floppy-o"></i></button>
+                        @if ($recorded)
+                        <a target="_new" href="/admin/financial-statements/pdf" class="btn btn-danger"><i
                                 class="fa fa-file-pdf-o"></i></a>
                         <a href="/admin/financial-statements/pdf/1" class="btn btn-primary"><i
                                 class="fa fa-cloud-download"></i></a>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -434,7 +439,37 @@
       }
     });
 </script>
-@endsection
-<script>
-    console.log({!! $toll_payments !!})
+<script src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js">
 </script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function recordLog (tvde_week_id, driver_id, company_id, value) {
+        Swal.fire({
+            title: "Tem a certeza?",
+            text: "Os dados atuais vão se sobrepor aos anteriores!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Sim, podes alterar!"
+            }).then((result) => {
+            if (result.isConfirmed) {
+                $.LoadingOverlay('show');
+                $.get('/admin/record-log/' + tvde_week_id + '/' + driver_id + '/' + company_id + '/' + value).then((resp) => {
+                    $.LoadingOverlay('hide');
+                    Swal.fire({
+                        title: "Alterado!",
+                        text: "Pode continuar.",
+                        icon: "success"
+                    }).then(() => {
+                        location.reload();
+                    });
+                }, (err) => {
+                    $.LoadingOverlay('hide');
+                    console.log(err);
+                });
+            }
+        });
+    }
+</script>
+@endsection
