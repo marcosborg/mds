@@ -155,7 +155,7 @@
                                 <td></td>
                                 @endif
                             </tr>
-                            @elseif ($combustion_expenses && $combustion_expenses['value'] > 0)
+                            @elseif ($combustion_expenses && is_array($combustion_expenses) && $combustion_expenses['value'] > 0)
                             <tr>
                                 <th>Abastecimento combustivel</th>
                                 <td></td>

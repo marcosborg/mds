@@ -3,14 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Adjustment;
-use App\Models\Card;
-use App\Models\CombustionTransaction;
 use App\Models\Company;
-use App\Models\ContractTypeRank;
 use App\Models\Driver;
-use App\Models\Electric;
-use App\Models\ElectricTransaction;
 use App\Models\TvdeActivity;
 use App\Models\TvdeMonth;
 use App\Models\TvdeWeek;
@@ -22,8 +16,6 @@ use App\Http\Controllers\Traits\Reports;
 use Auth;
 use Carbon\Carbon;
 use App\Models\TvdeYear;
-use App\Models\TollCard;
-use App\Models\TollPayment;
 use App\Models\RecordedLog;
 
 class FinancialStatementController extends Controller

@@ -17,120 +17,7 @@
         background-color: #ffffff;
     }
 
-    .btn-sm {
-        padding: 0px 5px;
-        font-size: 12px;
-        line-height: 1.5;
-        border-radius: 3px;
-        margin-left: 10px;
-    }
-
-    .unverified {
-        color: #cccccc;
-    }
-
-    .verified {
-        color: #00a65a;
-    }
 </style>
-@endsection
-@section('scripts')
-@parent
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    validateData = () => {
-        const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked:not(:disabled)');
-        const data = [];
-        checkboxes.forEach((checkbox) => {
-            let driver = JSON.parse(checkbox.value);
-            data.push({
-                driver: driver,
-                tvde_week_id: {{ session()->get('tvde_week_id') }},
-            });
-        });
-        $.post({
-            url: '/admin/company-reports/validate-data',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            data: {
-                data: data,
-            },
-            success: () => {
-                location.reload();
-            },
-            error: (error) => {
-                location.reload();
-            }
-        });
-    }
-
-    revalidateData = (driver_id, tvde_week_id) => {
-        let data = {
-            driver_id: driver_id,
-            tvde_week_id: tvde_week_id
-        };
-        $.post({
-            url: '/admin/company-reports/revalidate-data',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            data: data,
-            success: (resp) => {
-                Swal.fire('Atualizado com sucesso').then(() => {
-                    location.reload();
-                });
-            },
-            error: (error) => {
-                console.log(error);
-                location.reload();
-            }
-        });
-    }
-
-    // Função para selecionar todos os checkboxes que não estão marcados e não estão desativados
-    function selectAll() {
-        const checkboxes = document.querySelectorAll('input[type="checkbox"]:not(:checked):not(:disabled)');
-        checkboxes.forEach((checkbox) => {
-            checkbox.checked = true;
-        });
-
-        document.getElementById('selectAll').style.display = 'none';
-        document.getElementById('unselectAll').style.display = 'block';
-        checkCheckedCheckboxes();
-    }
-
-// Função para desmarcar todos os checkboxes que estão marcados e não estão desativados
-    function unselectAll() {
-        const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked:not(:disabled)');
-        checkboxes.forEach((checkbox) => {
-            checkbox.checked = false;
-        });
-
-        document.getElementById('selectAll').style.display = 'block';
-        document.getElementById('unselectAll').style.display = 'none';
-        checkCheckedCheckboxes();
-    }
-
-    // Função para verificar se existem checkboxes marcados que não estão desativados
-    function checkCheckedCheckboxes() {
-        const checkedCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked:not(:disabled)');
-        const validateButton = document.getElementById('validateData');
-
-        if (checkedCheckboxes.length > 0) {
-            validateButton.disabled = false;
-        } else {
-            validateButton.disabled = true;
-        }
-    }
-
-    // Adiciona um event listener para os checkboxes que chama a função checkCheckedCheckboxes() sempre que houver uma mudança
-    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-    checkboxes.forEach((checkbox) => {
-        checkbox.addEventListener('change', checkCheckedCheckboxes);
-    });
-
-</script>
 @endsection
 @section('content')
 <div class="content">
@@ -166,14 +53,6 @@
     <div class="panel panel-default" style="margin-top: 20px;">
         <div class="panel-heading">
             Faturação
-            <button class="btn btn-success btn-sm pull-right" onclick="validateData()" id="validateData"
-                disabled>Validar
-                selecionados</button>
-            <button class="btn btn-primary btn-sm pull-right" onclick="selectAll()" id="selectAll">Selecionar
-                todos</button>
-            <button class="btn btn-primary btn-sm pull-right" onclick="unselectAll()" id="unselectAll"
-                style="display: none;">Remover
-                seleção</button>
         </div>
         <div class="panel-body">
             <table>
@@ -189,8 +68,6 @@
                         <th style="text-align: right;">Ajustes</th>
                         <th style="text-align: right;">Txt. Admin.</th>
                         <th style="text-align: right">A pagar</th>
-                        <th style="text-align: right">Validar</th>
-                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -217,22 +94,6 @@
                         <td style="text-align: right">{{ number_format($driver->earnings['txt_admin'], 2) }} <small>€</small>
                         </td>
                         <td style="text-align: right">{{ number_format($driver->total, 2) }} <small>€</small></td>
-                        <td style="text-align: right">
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" value="{{ json_encode($driver) }}" {{
-                                        $driver->current_account ? 'checked disabled' : '' }}><span
-                                        class="glyphicon glyphicon-ok green-checkmark {{ $driver->current_account ? 'verified' : 'unverified' }}"></span>
-                                </label>
-                            </div>
-                        </td>
-                        <td style="text-align: right;">
-                            @if ($driver->current_account)
-                            <button class="btn btn-sm" onclick="revalidateData({{ $driver->id }}, {{ $tvde_week_id }})">
-                                <i class="fa-fw fas fa-sync-alt"></i>
-                            </button>
-                            @endif
-                        </td>
                     </tr>
                     @endif
                     @endforeach

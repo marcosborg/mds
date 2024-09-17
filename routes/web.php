@@ -444,8 +444,6 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'namespace' => 'Admin', 'mi
     // Company Report
     Route::prefix('company-reports')->group(function () {
         Route::get('/', 'CompanyReportController@index')->name('company-reports.index');
-        Route::post('validate-data', 'CompanyReportController@validateData');
-        Route::post('revalidate-data', 'CompanyReportController@revalidateData');
     });
 
     // Company Park
