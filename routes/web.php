@@ -380,6 +380,10 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'namespace' => 'Admin', 'mi
     Route::post('vehicle-items/ckmedia', 'VehicleItemController@storeCKEditorImages')->name('vehicle-items.storeCKEditorImages');
     Route::resource('vehicle-items', 'VehicleItemController');
 
+    // Vehicle Use
+    Route::delete('vehicle-uses/destroy', 'VehicleUseController@massDestroy')->name('vehicle-uses.massDestroy');
+    Route::resource('vehicle-uses', 'VehicleUseController');
+
     // Company
     Route::delete('companies/destroy', 'CompanyController@massDestroy')->name('companies.massDestroy');
     Route::post('companies/media', 'CompanyController@storeMedia')->name('companies.storeMedia');

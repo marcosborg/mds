@@ -1835,5 +1835,9 @@ return [
             'vehicle_item_helper' => ' ',
         ],
     ],
+    'vehicleUse' => [
+        'title'          => 'Vehicle Use',
+        'title_singular' => 'Vehicle Use',
+    ],
 
 ];
