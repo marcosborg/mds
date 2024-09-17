@@ -1831,6 +1831,8 @@ return [
             'balance_helper'    => ' ',
             'value'             => 'Value',
             'value_helper'      => ' ',
+            'vehicle_item'        => 'Matrícula',
+            'vehicle_item_helper' => ' ',
         ],
     ],
 

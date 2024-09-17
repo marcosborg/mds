@@ -36,6 +36,9 @@
                                     {{ trans('cruds.recordedLog.fields.company') }}
                                 </th>
                                 <th>
+                                    {{ trans('cruds.recordedLog.fields.vehicle_item') }}
+                                </th>
+                                <th>
                                     {{ trans('cruds.recordedLog.fields.value') }}
                                 </th>
                                 <th>
@@ -72,6 +75,14 @@
                                         <option value>{{ trans('global.all') }}</option>
                                         @foreach($companies as $key => $item)
                                             <option value="{{ $item->name }}">{{ $item->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </td>
+                                <td>
+                                    <select class="search">
+                                        <option value>{{ trans('global.all') }}</option>
+                                        @foreach($vehicle_items as $key => $item)
+                                            <option value="{{ $item->license_plate }}">{{ $item->license_plate }}</option>
                                         @endforeach
                                     </select>
                                 </td>
@@ -143,6 +154,7 @@
 { data: 'tvde_week_start_date', name: 'tvde_week.start_date' },
 { data: 'driver_name', name: 'driver.name' },
 { data: 'company_name', name: 'company.name' },
+{ data: 'vehicle_item_license_plate', name: 'vehicle_item.license_plate' },
 { data: 'value', name: 'value' },
 { data: 'balance', name: 'balance' },
 { data: 'actions', name: '{{ trans('global.actions') }}' }

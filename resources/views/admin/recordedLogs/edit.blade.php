@@ -48,6 +48,18 @@
                             @endif
                             <span class="help-block">{{ trans('cruds.recordedLog.fields.company_helper') }}</span>
                         </div>
+                        <div class="form-group {{ $errors->has('vehicle_item') ? 'has-error' : '' }}">
+                            <label for="vehicle_item_id">{{ trans('cruds.recordedLog.fields.vehicle_item') }}</label>
+                            <select class="form-control select2" name="vehicle_item_id" id="vehicle_item_id">
+                                @foreach($vehicle_items as $id => $entry)
+                                    <option value="{{ $id }}" {{ (old('vehicle_item_id') ? old('vehicle_item_id') : $recordedLog->vehicle_item->id ?? '') == $id ? 'selected' : '' }}>{{ $entry }}</option>
+                                @endforeach
+                            </select>
+                            @if($errors->has('vehicle_item'))
+                                <span class="help-block" role="alert">{{ $errors->first('vehicle_item') }}</span>
+                            @endif
+                            <span class="help-block">{{ trans('cruds.recordedLog.fields.vehicle_item_helper') }}</span>
+                        </div>
                         <div class="form-group {{ $errors->has('value') ? 'has-error' : '' }}">
                             <label class="required" for="value">{{ trans('cruds.recordedLog.fields.value') }}</label>
                             <input class="form-control" type="number" name="value" id="value" value="{{ old('value', $recordedLog->value) }}" step="0.01" required>

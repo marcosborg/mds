@@ -10,6 +10,7 @@ use App\Models\Company;
 use App\Models\Driver;
 use App\Models\RecordedLog;
 use App\Models\TvdeWeek;
+use App\Models\VehicleItem;
 use Gate;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -45,10 +46,15 @@ class RecordedLogController extends Controller
             $balance = $value;
         }
 
+        //Check if has vehicle item
+
+        $vehicle_item = VehicleItem::where('driver_id', $driver_id)->first();
+
         $recorded_log = new RecordedLog;
         $recorded_log->tvde_week_id = $tvde_week_id;
         $recorded_log->driver_id = $driver_id;
         $recorded_log->company_id = $company_id;
+        $recorded_log->vehicle_item_id = $vehicle_item ? $vehicle_item->id : null;
         $recorded_log->value = $value;
         $recorded_log->balance = $balance;
         $recorded_log->data = json_encode($this->getWeekResults($tvde_week_id, $driver_id, $company_id), true);
@@ -57,13 +63,12 @@ class RecordedLogController extends Controller
         return $recorded_log;
     }
 
-
     public function index(Request $request)
     {
         abort_if(Gate::denies('recorded_log_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         if ($request->ajax()) {
-            $query = RecordedLog::with(['tvde_week', 'driver', 'company'])->select(sprintf('%s.*', (new RecordedLog)->table));
+            $query = RecordedLog::with(['tvde_week', 'driver', 'company', 'vehicle_item'])->select(sprintf('%s.*', (new RecordedLog)->table));
             $table = Datatables::of($query);
 
             $table->addColumn('placeholder', '&nbsp;');
@@ -99,6 +104,10 @@ class RecordedLogController extends Controller
                 return $row->company ? $row->company->name : '';
             });
 
+            $table->addColumn('vehicle_item_license_plate', function ($row) {
+                return $row->vehicle_item ? $row->vehicle_item->license_plate : '';
+            });
+
             $table->editColumn('value', function ($row) {
                 return $row->value ? $row->value : '';
             });
@@ -110,7 +119,7 @@ class RecordedLogController extends Controller
                 return $row->data ? $row->data : '';
             });
 
-            $table->rawColumns(['actions', 'placeholder', 'tvde_week', 'driver', 'company']);
+            $table->rawColumns(['actions', 'placeholder', 'tvde_week', 'driver', 'company', 'vehicle_item']);
 
             return $table->make(true);
         }
@@ -118,8 +127,9 @@ class RecordedLogController extends Controller
         $tvde_weeks = TvdeWeek::get();
         $drivers = Driver::get();
         $companies = Company::get();
+        $vehicle_items = VehicleItem::get();
 
-        return view('admin.recordedLogs.index', compact('tvde_weeks', 'drivers', 'companies'));
+        return view('admin.recordedLogs.index', compact('tvde_weeks', 'drivers', 'companies', 'vehicle_items'));
     }
 
     public function create()
@@ -132,7 +142,9 @@ class RecordedLogController extends Controller
 
         $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
-        return view('admin.recordedLogs.create', compact('companies', 'drivers', 'tvde_weeks'));
+        $vehicle_items = VehicleItem::pluck('license_plate', 'id')->prepend(trans('global.pleaseSelect'), '');
+
+        return view('admin.recordedLogs.create', compact('companies', 'drivers', 'tvde_weeks', 'vehicle_items'));
     }
 
     public function store(StoreRecordedLogRequest $request)
@@ -154,7 +166,9 @@ class RecordedLogController extends Controller
 
         $recordedLog->load('tvde_week', 'driver', 'company');
 
-        return view('admin.recordedLogs.edit', compact('companies', 'drivers', 'recordedLog', 'tvde_weeks'));
+        $recordedLog->load('tvde_week', 'driver', 'company', 'vehicle_item');
+
+        return view('admin.recordedLogs.edit', compact('companies', 'drivers', 'recordedLog', 'tvde_weeks', 'recordedLog'));
     }
 
     public function update(UpdateRecordedLogRequest $request, RecordedLog $recordedLog)
@@ -168,7 +182,7 @@ class RecordedLogController extends Controller
     {
         abort_if(Gate::denies('recorded_log_show'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $recordedLog->load('tvde_week', 'driver', 'company');
+        $recordedLog->load('tvde_week', 'driver', 'company', 'vehicle_item');
 
         return view('admin.recordedLogs.show', compact('recordedLog'));
     }
