@@ -92,61 +92,6 @@
                     </table>
                 </div>
             </div>
-            @if (($electric_expenses && $electric_expenses['value'] > 0) || ($combustion_expenses &&
-            $combustion_expenses['value'] > 0))
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    Abastecimento
-                </div>
-                <div class="panel-body">
-                    <div class="row">
-                        <div class="col-md-5">
-                            <table class="table table-striped">
-                                <tbody>
-                                    <tr>
-                                        <th></th>
-                                        <th style="text-align: right;">Quantidade</th>
-                                        <th style="text-align: right;">Custo</th>
-                                    </tr>
-                                    @if ($electric_expenses)
-                                    <tr>
-                                        <th>Gastos</th>
-                                        <td>{{ $electric_expenses['amount'] }}</td>
-                                        <td>{{ $electric_expenses['total'] }}</td>
-                                    </tr>
-                                    @endif
-                                    @if ($combustion_expenses)
-                                    <tr>
-                                        <th>Gastos</th>
-                                        <td>{{ $combustion_expenses['amount'] }}</td>
-                                        <td>{{ $combustion_expenses['total'] }}</td>
-                                    </tr>
-                                    @endif
-                                </tbody>
-                            </table>
-                            @if ($electric_expenses)
-                            <h1 class="text-center" style="font-size: 40px; font-weight: 800;">{{
-                                number_format($electric_racio, 2) }}%
-                            </h1>
-                            @endif
-                            @if ($combustion_expenses)
-                            <h1 class="text-center" style="font-size: 40px; font-weight: 800;">{{
-                                number_format($combustion_racio, 2) }}%
-                            </h1>
-                            @endif
-                        </div>
-                        <div class="col-md-7">
-                            @if ($electric_expenses)
-                            <canvas id="electric_racio" style="height: 200px;"></canvas>
-                            @endif
-                            @if ($combustion_expenses)
-                            <canvas id="combustion_racio" style="height: 200px;"></canvas>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-            @endif
         </div>
         <div class="col-md-6">
             <div class="panel panel-default">
@@ -180,7 +125,17 @@
                                 <td>{{ number_format($total_tip_after_vat, 2) }}€</td>
                                 @endif
                             </tr>
-                            @if ($electric_expenses && $electric_expenses['value'] > 0)
+                            @if (isset($electric_expenses) && is_object($electric_expenses) && isset($electric_expenses->value)
+                            && $electric_expenses->value > 0)
+                            <tr>
+                                <th>Abastecimento elétrico</th>
+                                <td></td>
+                                @if ($driver)
+                                <td>- {{ $electric_expenses->total }}</td>
+                                <td></td>
+                                @endif
+                            </tr>
+                            @elseif (isset($electric_expenses) && is_array($electric_expenses) && isset($electric_expenses['value']) && $electric_expenses['value'] > 0)
                             <tr>
                                 <th>Abastecimento elétrico</th>
                                 <td></td>
@@ -190,7 +145,17 @@
                                 @endif
                             </tr>
                             @endif
-                            @if ($combustion_expenses && $combustion_expenses['value'] > 0)
+                            @if ($combustion_expenses && is_object($combustion_expenses) &&
+                            isset($combustion_expenses->value) && $combustion_expenses->value > 0)
+                            <tr>
+                                <th>Abastecimento combustivel</th>
+                                <td></td>
+                                @if ($driver)
+                                <td>- {{ $combustion_expenses->total }}</td>
+                                <td></td>
+                                @endif
+                            </tr>
+                            @elseif ($combustion_expenses && $combustion_expenses['value'] > 0)
                             <tr>
                                 <th>Abastecimento combustivel</th>
                                 <td></td>
@@ -200,11 +165,19 @@
                                 @endif
                             </tr>
                             @endif
-                            @if ($toll_payments)
+
+                            @if ($toll_payments && is_object($toll_payments))
                             <tr>
                                 <th>Portagens</th>
                                 <td></td>
                                 <td>- {{ number_format($toll_payments->sum('total'), 2) }}€</td>
+                                <td></td>
+                            </tr>
+                            @elseif ($toll_payments)
+                            <tr>
+                                <th>Portagens</th>
+                                <td></td>
+                                <td>- {{ number_format(array_sum(array_column($toll_payments, 'total')), 2) }}€</td>
                                 <td></td>
                             </tr>
                             @endif
@@ -248,8 +221,6 @@
                         @if ($recorded)
                         <a target="_new" href="/admin/financial-statements/pdf" class="btn btn-danger"><i
                                 class="fa fa-file-pdf-o"></i></a>
-                        <a href="/admin/financial-statements/pdf/1" class="btn btn-primary"><i
-                                class="fa fa-cloud-download"></i></a>
                         @endif
                     </div>
                 </div>
@@ -259,28 +230,6 @@
                 <a href="/admin/print-alls" class="btn btn-primary"><i class="fa fa-file-pdf-o"></i> Imprimir todos</a>
             </div>
             @endif
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-md-4">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    Origem dos ganhos
-                </div>
-                <div class="panel-body">
-                    <canvas id="driver_earnings" style="height: 400px"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-8">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    Ranking de faturação semanal por motoristas
-                </div>
-                <div class="panel-body">
-                    <canvas id="team_earnings" style="height: 400px"></canvas>
-                </div>
-            </div>
         </div>
     </div>
     @endif
@@ -295,150 +244,10 @@
     table {
         font-size: 13px;
     }
-
-    canvas#electric_racio {
-        pointer-events: none;
-    }
 </style>
 @endsection
 @section('scripts')
 @parent
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    const team_earnings = {!! $team_earnings !!};
-    const labels = [];
-    const data = [];
-    const backgrounds = [];
-    team_earnings.forEach(element => {
-        labels.push(element.driver);
-        data.push(element.earnings);
-        if(element.own){
-            backgrounds.push('#605ca8');
-        } else {
-            backgrounds.push('#00a65a94');
-        }
-    });
-    const ctx1 = document.getElementById('team_earnings');
-    new Chart(ctx1, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Valor faturado',
-          data: data,
-          borderWidth: 1,
-          backgroundColor: backgrounds
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true
-          }
-        },
-      }
-    });
-</script>
-<script>
-    const ctx2 = document.getElementById('driver_earnings');
-    new Chart(ctx2, {
-      type: 'doughnut',
-      data: {
-        labels: ['UBER', 'BOLT', 'GORJETAS'],
-        datasets: [{
-          label: 'Valor faturado',
-          data: [{!! $total_earnings_uber !!}, {!! $total_earnings_bolt !!}, {!! $total_tips !!}],
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-      }
-    });
-</script>
-<script>
-    const ctx3 = document.getElementById('electric_racio');
-    const combustion_racio = {{ $combustion_racio ? $combustion_racio : 0 }};
-    const combustion_racio_difference = 100 - combustion_racio;
-    const electric_racio = {{ $electric_racio ? $electric_racio : 0 }};
-    const electric_racio_difference = 100 - electric_racio;
-    new Chart(ctx3, {
-      type: 'bar',
-      data: {
-        labels: ['Rácio'],
-        datasets: [
-            {
-            label: 'Rácio',
-            data: [electric_racio],
-            backgroundColor: 'lightblue',
-            },
-            {
-            label: '',
-            data: [electric_racio_difference],
-            backgroundColor: 'transparent',
-            },
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-            title: {
-                display: true,
-                text: 'Rácio de rentabilidade'
-            },
-        },
-        scales: {
-            x: {
-                stacked: true,
-            },
-            y: {
-                stacked: true
-            }
-        }
-      }
-    });
-</script>
-<script>
-    const ctx4 = document.getElementById('combustion_racio');
-    new Chart(ctx4, {
-      type: 'bar',
-      data: {
-        labels: ['Rácio'],
-        datasets: [
-            {
-            label: 'Rácio',
-            data: [combustion_racio],
-            backgroundColor: 'lightblue',
-            },
-            {
-            label: '',
-            data: [combustion_racio_difference],
-            backgroundColor: 'transparent',
-            },
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-            title: {
-                display: true,
-                text: 'Rácio de rentabilidade'
-            },
-        },
-        scales: {
-            x: {
-                stacked: true,
-            },
-            y: {
-                stacked: true
-            }
-        }
-      }
-    });
-</script>
 <script src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js">
 </script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
