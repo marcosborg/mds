@@ -100,6 +100,10 @@
                                         @endforeach
                                     </td>
                                     <td>
+                                        <a class="btn btn-xs btn-default"
+                                            href="/admin/vehicle-uses/{{ $vehicleItem->id }}">
+                                            Ocupação
+                                        </a>
                                         @can('vehicle_item_show')
                                         <a class="btn btn-xs btn-primary"
                                             href="{{ route('admin.vehicle-items.show', $vehicleItem->id) }}">

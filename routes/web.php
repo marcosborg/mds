@@ -381,8 +381,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'namespace' => 'Admin', 'mi
     Route::resource('vehicle-items', 'VehicleItemController');
 
     // Vehicle Use
-    Route::delete('vehicle-uses/destroy', 'VehicleUseController@massDestroy')->name('vehicle-uses.massDestroy');
-    Route::resource('vehicle-uses', 'VehicleUseController');
+    Route::get('vehicle-uses/{vehicle_item_id}', 'VehicleUseController@index');
 
     // Company
     Route::delete('companies/destroy', 'CompanyController@massDestroy')->name('companies.massDestroy');
