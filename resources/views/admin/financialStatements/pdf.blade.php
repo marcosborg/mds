@@ -174,7 +174,7 @@
                                 <td></td>
                                 @endif
                             </tr>
-                            @elseif ($electric_expenses && is_array($electric_expenses) && $electric_expenses['value'] > 0)
+                            @elseif ($electric_expenses && $electric_expenses['value'] > 0)
                             <tr>
                                 <th style="text-align: left;">Abastecimento elétrico</th>
                                 <td></td>
@@ -194,7 +194,7 @@
                                 <td></td>
                                 @endif
                             </tr>
-                            @elseif ($combustion_expenses && is_array($combustion_expenses) && $combustion_expenses['value'] > 0)
+                            @elseif ($combustion_expenses && $combustion_expenses['value'] > 0)
                             <tr>
                                 <th style="text-align: left;">Abastecimento combustivel</th>
                                 <td></td>
