@@ -110,7 +110,7 @@ trait Reports
 
             //FUEL
 
-            $fuel_transactions = 0;
+            $fuel_transactions = [];
 
             if ($driver->electric) {
                 $electric_transactions = ElectricTransaction::where([
@@ -120,7 +120,7 @@ trait Reports
                     ->sum('total');
 
                 if ($electric_transactions > 0) {
-                    $fuel_transactions = $electric_transactions;
+                    $fuel_transactions[] = $electric_transactions;
                 }
             }
 
@@ -132,8 +132,12 @@ trait Reports
                     ->sum('total');
 
                 if ($combustion_transactions > 0) {
-                    $fuel_transactions = $combustion_transactions;
+                    $fuel_transactions[] = $combustion_transactions;
                 }
+            }
+
+            if (is_array($fuel_transactions)) {
+                $fuel_transactions = array_sum($fuel_transactions);
             }
 
             $driver->fuel = $fuel_transactions;
@@ -240,9 +244,6 @@ trait Reports
             } else {
                 $driver->current_account = false;
             }
-
-
-
         }
 
         $totals = collect([

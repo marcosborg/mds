@@ -3,17 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Company;
-use App\Models\Driver;
-use App\Models\TvdeMonth;
-use App\Models\TvdeWeek;
-use App\Models\TvdeYear;
 use Gate;
 use Symfony\Component\HttpFoundation\Response;
 use App\Http\Controllers\Traits\Reports;
 use Illuminate\Http\Request;
-use App\Models\CurrentAccount;
-use App\Models\DriversBalance;
 
 class CompanyReportController extends Controller
 {
@@ -27,7 +20,6 @@ class CompanyReportController extends Controller
         $filter = $this->filter();
         $company_id = $filter['company_id'];
         $tvde_week_id = $filter['tvde_week_id'];
-        $tvde_week = $filter['tvde_week'];
         $tvde_years = $filter['tvde_years'];
         $tvde_year_id = $filter['tvde_year_id'];
         $tvde_months = $filter['tvde_months'];
