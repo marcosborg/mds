@@ -72,4 +72,9 @@ class VehicleItem extends Model implements HasMedia
     {
         return $this->getMedia('documents');
     }
+
+    public function recorded_logs()
+    {
+        return $this->hasMany(RecordedLog::class);
+    }
 }
