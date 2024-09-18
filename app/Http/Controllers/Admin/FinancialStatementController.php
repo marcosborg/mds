@@ -165,6 +165,8 @@ class FinancialStatementController extends Controller
 
         // END SCRIPT
 
+        //return $data['electric_expenses'];
+
         return view('admin.financialStatements.index')->with($data);
     }
 

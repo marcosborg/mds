@@ -135,7 +135,7 @@
                                 <td></td>
                                 @endif
                             </tr>
-                            @elseif (isset($electric_expenses) && !is_object($electric_expenses) && isset($electric_expenses['value']) && $electric_expenses['value'] > 0)
+                            @elseif (isset($electric_expenses) && is_array($electric_expenses) && isset($electric_expenses['value']) && $electric_expenses['value'] > 0)
                             <tr>
                                 <th>Abastecimento elétrico</th>
                                 <td></td>
@@ -146,7 +146,7 @@
                             </tr>
                             @endif
                             @if ($combustion_expenses && is_object($combustion_expenses) &&
-                            isset($combustion_expenses->value) && $combustion_expenses->value > 0)
+                            isset($combustion_expenses->value))
                             <tr>
                                 <th>Abastecimento combustivel</th>
                                 <td></td>
@@ -155,7 +155,7 @@
                                 <td></td>
                                 @endif
                             </tr>
-                            @elseif ($combustion_expenses && !is_object($combustion_expenses) && $combustion_expenses['value'] > 0)
+                            @elseif (isset($combustion_expenses) && is_array($combustion_expenses) && isset($combustion_expenses['value']) && $combustion_expenses['value'] > 0)
                             <tr>
                                 <th>Abastecimento combustivel</th>
                                 <td></td>

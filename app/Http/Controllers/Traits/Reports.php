@@ -637,11 +637,11 @@ trait Reports
                     'card' => $electric->code,
                     'tvde_week_id' => $tvde_week_id
                 ])->get();
-                $electric_expenses = collect([
+                $electric_expenses = [
                     'amount' => number_format($electric_transactions->sum('amount'), 2, '.', '') . ' kWh',
                     'total' => number_format($electric_transactions->sum('total'), 2, '.', '') . ' €',
                     'value' => $electric_transactions->sum('total')
-                ]);
+                ];
             }
         }
 
@@ -657,11 +657,11 @@ trait Reports
                 'card' => $code,
                 'tvde_week_id' => $tvde_week_id
             ])->get();
-            $combustion_expenses = collect([
+            $combustion_expenses = [
                 'amount' => number_format($combustion_transactions->sum('amount'), 2, '.', '') . ' L',
                 'total' => number_format($combustion_transactions->sum('total'), 2, '.', '') . ' €',
                 'value' => $combustion_transactions->sum('total')
-            ]);
+            ];
         }
 
         // TOLL EXPENSES
