@@ -216,7 +216,7 @@
                             number_format($final_total, 2) }}</span>€</h3>
                     <div class="pull-right">
                         <button class="btn btn-success"
-                            onclick="recordLog({{ $tvde_week_id }}, {{ $driver_id }}, {{ $company_id }}, {{ number_format($final_total, 2) }})"><i
+                            onclick="recordLog({{ $tvde_week_id }}, {{ $driver_id }}, {{ $company_id }}, {{ number_format($final_total, 2, '.', '') }})"><i
                                 class="fa fa-floppy-o"></i></button>
                         @if ($recorded)
                         <a target="_new" href="/admin/financial-statements/pdf" class="btn btn-danger"><i
