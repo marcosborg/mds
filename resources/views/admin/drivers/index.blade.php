@@ -37,7 +37,7 @@
                                     {{ trans('cruds.user.fields.email') }}
                                 </th>
                                 <th>
-                                    {{ trans('cruds.driver.fields.code') }}
+                                    {{ trans('cruds.driver.fields.payment_vat') }}
                                 </th>
                                 <th>
                                     {{ trans('cruds.driver.fields.contract_type') }}
@@ -119,7 +119,7 @@
 { data: 'id', name: 'id' },
 { data: 'user_name', name: 'user.name' },
 { data: 'user.email', name: 'user.email' },
-{ data: 'code', name: 'code' },
+{ data: 'vat', name: 'payment_vat' },
 { data: 'contract_type_name', name: 'contract_type.name' },
 { data: 'contract_vat_name', name: 'contract_vat.name' },
 { data: 'state_name', name: 'state.name' },

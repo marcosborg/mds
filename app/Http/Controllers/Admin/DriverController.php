@@ -76,6 +76,10 @@ class DriverController extends Controller
                 return $row->electric ? $row->electric->code : '';
             });
 
+            $table->addColumn('vat', function ($row) {
+                return $row->payment_vat ? $row->payment_vat : $row->driver_vat;
+            });
+
             $table->addColumn('tool_card_code', function ($row) {
                 return $row->tool_card ? $row->tool_card->code : '';
             });
