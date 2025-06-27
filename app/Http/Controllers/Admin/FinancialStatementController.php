@@ -47,6 +47,8 @@ class FinancialStatementController extends Controller
         $tvde_weeks = $filter['tvde_weeks'];
         $drivers = $filter['drivers'];
 
+        //return $filter;
+
         $user = auth()->user();
 
         if ($user->hasRole('driver') && !$user->hasRole('owner')) {

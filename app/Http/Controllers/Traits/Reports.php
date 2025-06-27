@@ -483,35 +483,50 @@ trait Reports
 
     public function filter()
     {
-        $company_id = session()->get('company_id') ?? $company_id = session()->get('company_id');
-        $tvde_year_id = session()->get('tvde_year_id') ? session()->get('tvde_year_id') : $tvde_year_id = TvdeYear::orderBy('name')->first()->id;
+        $company_id = session()->get('company_id');
+
+        // Pega o ano atual
+        $currentYear = date('Y');
+        $tvde_year_id = session()->get('tvde_year_id') ??
+            TvdeYear::where('name', $currentYear)->first()?->id;
+
+        // Se não encontrar pelo nome, pega o mais recente
+        if (!$tvde_year_id) {
+            $tvde_year_id = TvdeYear::orderBy('name', 'desc')->first()?->id;
+        }
+
+        // Mês atual
         if (session()->has('tvde_month_id')) {
             $tvde_month_id = session()->get('tvde_month_id');
         } else {
-            $tvde_month = TvdeMonth::orderBy('number', 'desc')
+            $currentMonth = date('n'); // 1 a 12
+            $tvde_month = TvdeMonth::where('number', $currentMonth)
+                ->where('year_id', $tvde_year_id)
                 ->whereHas('weeks', function ($week) use ($company_id) {
-                    $week->whereHas('tvdeActivities', function ($tvdeActivity) use ($company_id) {
-                        $tvdeActivity->where('company_id', $company_id);
+                    $week->whereHas('tvdeActivities', function ($activity) use ($company_id) {
+                        $activity->where('company_id', $company_id);
                     });
                 })
-                ->where('year_id', $tvde_year_id)
                 ->first();
-            if ($tvde_month) {
-                $tvde_month_id = $tvde_month->id;
-            } else {
-                $tvde_month_id = 0;
-            }
+
+            $tvde_month_id = $tvde_month?->id ?? 0;
         }
+
+        // Semana atual
         if (session()->has('tvde_week_id')) {
             $tvde_week_id = session()->get('tvde_week_id');
         } else {
-            $tvde_week = TvdeWeek::orderBy('number', 'desc')->where('tvde_month_id', $tvde_month_id)->first();
-            if ($tvde_week) {
-                $tvde_week_id = $tvde_week->id;
-                session()->put('tvde_week_id', $tvde_week->id);
-            } else {
-                $tvde_week_id = 1;
-            }
+            $tvde_week = TvdeWeek::where('tvde_month_id', $tvde_month_id)
+                ->whereHas('tvdeActivities', function ($activity) use ($company_id) {
+                    $activity->where('company_id', $company_id);
+                })
+                ->orderBy('number', 'desc')
+                ->first();
+
+            $tvde_week_id = $tvde_week?->id ?? 1;
+
+            // Salva na sessão para manter consistência
+            session()->put('tvde_week_id', $tvde_week_id);
         }
 
         $tvde_years = TvdeYear::orderBy('name')
@@ -521,38 +536,42 @@ trait Reports
                         $tvdeActivity->where('company_id', $company_id);
                     });
                 });
-            })
-            ->get();
+            })->get();
+
         $tvde_months = TvdeMonth::orderBy('number', 'asc')
+            ->where('year_id', $tvde_year_id)
             ->whereHas('weeks', function ($week) use ($company_id) {
                 $week->whereHas('tvdeActivities', function ($tvdeActivity) use ($company_id) {
                     $tvdeActivity->where('company_id', $company_id);
                 });
-            })
-            ->where('year_id', $tvde_year_id)->get();
+            })->get();
 
         $tvde_weeks = TvdeWeek::orderBy('number', 'asc')
+            ->where('tvde_month_id', $tvde_month_id)
             ->whereHas('tvdeActivities', function ($tvdeActivity) use ($company_id) {
                 $tvdeActivity->where('company_id', $company_id);
-            })
-            ->where('tvde_month_id', $tvde_month_id)->get();
+            })->get();
 
         $tvde_week = TvdeWeek::find($tvde_week_id);
 
-        $drivers = Driver::where('company_id', $company_id)->where('state_id', 1)->orderBy('name')->get();
+        $drivers = Driver::where('company_id', $company_id)
+            ->where('state_id', 1)
+            ->orderBy('name')
+            ->get();
 
         return [
             'company_id' => $company_id,
             'tvde_year_id' => $tvde_year_id,
             'tvde_years' => $tvde_years,
-            'tvde_week_id' => $tvde_week_id,
-            'tvde_week' => $tvde_week,
-            'tvde_months' => $tvde_months,
             'tvde_month_id' => $tvde_month_id,
+            'tvde_months' => $tvde_months,
+            'tvde_week_id' => $tvde_week_id,
             'tvde_weeks' => $tvde_weeks,
+            'tvde_week' => $tvde_week,
             'drivers' => $drivers,
         ];
     }
+
 
     public function getWeekResults($tvde_week_id, $driver_id, $company_id)
     {
