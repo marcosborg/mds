@@ -42,10 +42,6 @@ class StoreAdjustmentRequest extends FormRequest
             'drivers' => [
                 'array',
             ],
-            'company_id' => [
-                'required',
-                'integer',
-            ],
         ];
     }
 }

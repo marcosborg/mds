@@ -42,10 +42,6 @@ class UpdateAdjustmentRequest extends FormRequest
             'drivers' => [
                 'array',
             ],
-            'company_id' => [
-                'required',
-                'integer',
-            ],
         ];
     }
 }

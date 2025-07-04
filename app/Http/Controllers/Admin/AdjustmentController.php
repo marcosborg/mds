@@ -24,11 +24,7 @@ class AdjustmentController extends Controller
         abort_if(Gate::denies('adjustment_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         if ($request->ajax()) {
-            if (session()->has('company_id') && session()->get('company_id') !== '0') {
-                $query = Adjustment::where('company_id', session()->get('company_id'))->with(['drivers', 'company'])->select(sprintf('%s.*', (new Adjustment)->table));
-            } else {
-                $query = Adjustment::with(['drivers', 'company'])->select(sprintf('%s.*', (new Adjustment)->table));
-            }
+            $query = Adjustment::with(['drivers', 'company'])->select(sprintf('%s.*', (new Adjustment)->table));
             $table = Datatables::of($query);
 
             $table->addColumn('placeholder', '&nbsp;');
@@ -76,19 +72,8 @@ class AdjustmentController extends Controller
 
                 return implode(' ', $labels);
             });
-            $table->addColumn('company_name', function ($row) {
-                return $row->company ? $row->company->name : '';
-            });
 
-            $table->editColumn('company_expense', function ($row) {
-                return '<input type="checkbox" disabled ' . ($row->company_expense ? 'checked' : null) . '>';
-            });
-
-            $table->editColumn('fleet_management', function ($row) {
-                return '<input type="checkbox" disabled ' . ($row->fleet_management ? 'checked' : null) . '>';
-            });
-
-            $table->rawColumns(['actions', 'placeholder', 'drivers', 'company', 'company_expense', 'fleet_management']);
+            $table->rawColumns(['actions', 'placeholder', 'drivers', 'company']);
 
             return $table->make(true);
         }
@@ -102,9 +87,7 @@ class AdjustmentController extends Controller
 
         $drivers = Driver::pluck('name', 'id');
 
-        $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
-
-        return view('admin.adjustments.create', compact('companies', 'drivers'));
+        return view('admin.adjustments.create', compact('drivers'));
     }
 
     public function store(StoreAdjustmentRequest $request)
@@ -119,17 +102,11 @@ class AdjustmentController extends Controller
     {
         abort_if(Gate::denies('adjustment_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        if (session()->has('company_id') && session()->get('company_id') !== '0') {
-            $drivers = Driver::where('company_id', session()->get('company_id'))->pluck('name', 'id');
-        } else {
-            $drivers = Driver::pluck('name', 'id');
-        }
+        $drivers = Driver::pluck('name', 'id');
 
-        $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
+        $adjustment->load('drivers');
 
-        $adjustment->load('drivers', 'company');
-
-        return view('admin.adjustments.edit', compact('adjustment', 'companies', 'drivers'));
+        return view('admin.adjustments.edit', compact('adjustment', 'drivers'));
     }
 
     public function update(UpdateAdjustmentRequest $request, Adjustment $adjustment)

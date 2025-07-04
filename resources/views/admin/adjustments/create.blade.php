@@ -80,40 +80,6 @@
                             @endif
                             <span class="help-block">{{ trans('cruds.adjustment.fields.drivers_helper') }}</span>
                         </div>
-                        <div class="form-group {{ $errors->has('company') ? 'has-error' : '' }}">
-                            <label class="required" for="company_id">{{ trans('cruds.adjustment.fields.company') }}</label>
-                            <select class="form-control select2" name="company_id" id="company_id" required>
-                                @foreach($companies as $id => $entry)
-                                    <option value="{{ $id }}" {{ old('company_id') == $id ? 'selected' : '' }}>{{ $entry }}</option>
-                                @endforeach
-                            </select>
-                            @if($errors->has('company'))
-                                <span class="help-block" role="alert">{{ $errors->first('company') }}</span>
-                            @endif
-                            <span class="help-block">{{ trans('cruds.adjustment.fields.company_helper') }}</span>
-                        </div>
-                        <div class="form-group {{ $errors->has('company_expense') ? 'has-error' : '' }}">
-                            <div>
-                                <input type="hidden" name="company_expense" value="0">
-                                <input type="checkbox" name="company_expense" id="company_expense" value="1" {{ old('company_expense', 0) == 1 ? 'checked' : '' }}>
-                                <label for="company_expense" style="font-weight: 400">{{ trans('cruds.adjustment.fields.company_expense') }}</label>
-                            </div>
-                            @if($errors->has('company_expense'))
-                                <span class="help-block" role="alert">{{ $errors->first('company_expense') }}</span>
-                            @endif
-                            <span class="help-block">{{ trans('cruds.adjustment.fields.company_expense_helper') }}</span>
-                        </div>
-                        <div class="form-group {{ $errors->has('fleet_management') ? 'has-error' : '' }}">
-                            <div>
-                                <input type="hidden" name="fleet_management" value="0">
-                                <input type="checkbox" name="fleet_management" id="fleet_management" value="1" {{ old('fleet_management', 0) == 1 ? 'checked' : '' }}>
-                                <label for="fleet_management" style="font-weight: 400">{{ trans('cruds.adjustment.fields.fleet_management') }}</label>
-                            </div>
-                            @if($errors->has('fleet_management'))
-                                <span class="help-block" role="alert">{{ $errors->first('fleet_management') }}</span>
-                            @endif
-                            <span class="help-block">{{ trans('cruds.adjustment.fields.fleet_management_helper') }}</span>
-                        </div>
                         <div class="form-group">
                             <button class="btn btn-danger" type="submit">
                                 {{ trans('global.save') }}
