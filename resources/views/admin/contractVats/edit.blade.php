@@ -36,6 +36,14 @@
                             @endif
                             <span class="help-block">{{ trans('cruds.contractVat.fields.tips_helper') }}</span>
                         </div>
+                        <div class="form-group {{ $errors->has('fee') ? 'has-error' : '' }}">
+                            <label for="tips">{{ trans('cruds.contractVat.fields.fee') }}</label>
+                            <input class="form-control" type="number" name="fee" id="fee" value="{{ old('fee', $contractVat->fee) }}" step="0.01">
+                            @if($errors->has('fee'))
+                                <span class="help-block" role="alert">{{ $errors->first('fee') }}</span>
+                            @endif
+                            <span class="help-block">{{ trans('cruds.contractVat.fields.fee_helper') }}</span>
+                        </div>
                         <div class="form-group {{ $errors->has('contract_type') ? 'has-error' : '' }}">
                             <label class="required" for="contract_type_id">{{ trans('cruds.contractVat.fields.contract_type') }}</label>
                             <select class="form-control select2" name="contract_type_id" id="contract_type_id" required>

@@ -37,6 +37,9 @@
                                         {{ trans('cruds.contractVat.fields.tips') }}
                                     </th>
                                     <th>
+                                        {{ trans('cruds.contractVat.fields.fee') }}
+                                    </th>
+                                    <th>
                                         {{ trans('cruds.contractVat.fields.contract_type') }}
                                     </th>
                                     <th>
@@ -61,6 +64,9 @@
                                         </td>
                                         <td>
                                             {{ $contractVat->tips ?? '' }}
+                                        </td>
+                                        <td>
+                                            {{ $contractVat->fee ?? '' }}
                                         </td>
                                         <td>
                                             {{ $contractVat->contract_type->name ?? '' }}

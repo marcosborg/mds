@@ -1541,6 +1541,8 @@ return [
             'updated_at_helper'    => ' ',
             'deleted_at'           => 'Deleted at',
             'deleted_at_helper'    => ' ',
+            'fee'                   => 'Fee',
+            'fee_helper' => ' '
         ],
     ],
     'combustionTransaction' => [

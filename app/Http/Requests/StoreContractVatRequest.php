@@ -29,6 +29,9 @@ class StoreContractVatRequest extends FormRequest
                 'numeric',
                 'required',
             ],
+            'fee' => [
+                'numeric',
+            ],
             'contract_type_id' => [
                 'required',
                 'integer',
