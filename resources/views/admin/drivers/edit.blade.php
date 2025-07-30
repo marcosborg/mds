@@ -117,7 +117,7 @@
                                 @foreach($contract_vats as $id => $contract_vat)
                                 <option value="{{ $contract_vat->id }}" {{ (old('contract_vat_id') ?
                                     old('contract_vat_id') : $driver->contract_vat->id ?? '') == $contract_vat->id ?
-                                    'selected' : '' }}>Tax: {{ $contract_vat->percent }}% | Tip: {{ $contract_vat->tips }}%</option>
+                                    'selected' : '' }}>Tax: {{ $contract_vat->percent }}% | Tip: {{ $contract_vat->tips }}% | Fee: {{ $contract_vat->fee }}%</option>
                                 @endforeach
                             </select>
                             @if($errors->has('contract_vat'))
