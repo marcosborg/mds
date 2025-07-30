@@ -208,6 +208,9 @@ trait Reports
             if ($driver && $driver->contract_vat->percent && $driver->contract_vat->percent > 0 && $driver->total > 0) {
                 $txt_admin = ($driver->total * $driver->contract_vat->percent) / 100;
                 $driver->total = $driver->total - $txt_admin;
+            } elseif ($driver && $driver->contract_vat->fee > 0 && $earnings_after_discount > 0) {
+                $txt_admin = ($earnings_after_discount * $driver->contract_vat->fee) / 100;
+                $driver->total = $driver->total - $txt_admin;
             } else {
                 $txt_admin = 0;
             }
