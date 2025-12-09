@@ -30,9 +30,9 @@
             <div class="period-links">
                 @foreach ($tvde_weeks as $tvde_week)
                 <a href="/admin/financial-statements/week/{{ $tvde_week->id }}"
-                    class="period-link {{ $tvde_week->id == $tvde_week_id ? 'is-active' : '' }}">Semana de
-                    {{ \Carbon\Carbon::parse($tvde_week->start_date)->format('d') }} a
-                    {{ \Carbon\Carbon::parse($tvde_week->end_date)->format('d') }}</a>
+                    class="period-link {{ $tvde_week->id == $tvde_week_id ? 'is-active' : '' }}">Semana {{ isset($tvde_week->number) ? $tvde_week->number . ' - ' : '' }}de
+                    {{ \Carbon\Carbon::parse($tvde_week->start_date)->format('d/m') }} a
+                    {{ \Carbon\Carbon::parse($tvde_week->end_date)->format('d/m') }}</a>
                 @endforeach
             </div>
         </div>
@@ -277,6 +277,7 @@
         padding: 12px 14px;
         background: #fff;
         text-align: center;
+        overflow: hidden;
     }
 
     .period-label {
@@ -288,10 +289,14 @@
 
     .period-links {
         margin-top: 8px;
-        display: flex;
-        flex-wrap: wrap;
+        display: inline-flex;
+        flex-wrap: nowrap;
         gap: 6px;
-        justify-content: center;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        justify-content: flex-start;
+        width: 100%;
+        white-space: nowrap;
     }
 
     .period-link {
