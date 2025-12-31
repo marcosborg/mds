@@ -24,7 +24,6 @@ Route::prefix('loja')->group(function () {
     Route::get('acessorios', 'Website\ProductsController@index');
 });
 
-Route::get('db-copy/latest-500', 'DatabaseCopyController@copyLatest');
 
 Route::get('legal/{id}/{slug}', 'Website\LegalController@index');
 
