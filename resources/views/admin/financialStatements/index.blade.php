@@ -41,15 +41,28 @@
     <div class="board-main">
         <aside class="drivers-stack">
             <div class="drivers-title">Motoristas</div>
-            <div class="drivers-list">
-                @if(auth()->user()->hasRole('admin'))
-                <a href="/admin/financial-statements/driver/0"
-                    class="driver-btn {{ $driver_id == null ? 'is-active' : '' }}">Todos</a>
-                @endif
-                @foreach ($drivers as $d)
-                <a href="/admin/financial-statements/driver/{{ $d->id }}"
-                    class="driver-btn {{ $driver_id == $d->id ? 'is-active' : '' }}">{{ strtoupper($d->name) }}</a>
-                @endforeach
+            @php
+                $selectedDriverLabel = $driver ? strtoupper($driver->name) : 'Todos';
+            @endphp
+            <div class="driver-filter" data-driver-filter>
+                <button class="driver-filter-toggle" type="button" aria-expanded="false" data-driver-toggle>
+                    <span class="driver-filter-current">{{ $selectedDriverLabel }}</span>
+                </button>
+                <div class="driver-filter-panel" hidden data-driver-panel>
+                    <input class="driver-filter-search" type="text" placeholder="Procurar" data-driver-search>
+                    <div class="driver-filter-options" data-driver-options>
+                        @if(auth()->user()->hasRole('admin'))
+                        <a href="/admin/financial-statements/driver/0"
+                            class="driver-option {{ $driver_id == null || $driver_id == 0 ? 'is-selected' : '' }}"
+                            data-driver-label="Todos">Todos</a>
+                        @endif
+                        @foreach ($drivers as $d)
+                        <a href="/admin/financial-statements/driver/{{ $d->id }}"
+                            class="driver-option {{ $driver_id == $d->id ? 'is-selected' : '' }}"
+                            data-driver-label="{{ strtoupper($d->name) }}">{{ strtoupper($d->name) }}</a>
+                        @endforeach
+                    </div>
+                </div>
             </div>
         </aside>
 
@@ -65,42 +78,42 @@
                                 <tbody>
                                     <tr>
                                         <th>UBER</th>
-                                        <td>{{ $total_earnings_uber }}&euro;</td>
+                                        <td>{{ $total_earnings_uber }}€</td>
                                         @if ($driver)
                                         <td>{{ $contract_type_rank ? $contract_type_rank->percent : '' }}%</td>
-                                        <td>{{ $total_uber }}&euro;</td>
+                                        <td>{{ $total_uber }}€</td>
                                         @endif
                                     </tr>
                                     <tr>
                                         <th>BOLT</th>
-                                        <td>{{ $total_earnings_bolt }}&euro;</td>
+                                        <td>{{ $total_earnings_bolt }}€</td>
                                         @if ($driver)
                                         <td>{{ $contract_type_rank ? $contract_type_rank->percent : '' }}%</td>
-                                        <td>{{ $total_bolt }}&euro;</td>
+                                        <td>{{ $total_bolt }}€</td>
                                         @endif
                                     </tr>
                                     <tr>
                                         <th>Gorjeta UBER</th>
-                                        <td>{{ $total_tips_uber }}&euro;</td>
+                                        <td>{{ $total_tips_uber }}€</td>
                                         @if ($driver)
                                         <td>{{ $uber_tip_percent }}%</td>
-                                        <td>{{ $uber_tip_after_vat }}&euro;</td>
+                                        <td>{{ $uber_tip_after_vat }}€</td>
                                         @endif
                                     </tr>
                                     <tr>
                                         <th>Gorjeta BOLT</th>
-                                        <td>{{ $total_tips_bolt }}&euro;</td>
+                                        <td>{{ $total_tips_bolt }}€</td>
                                         @if ($driver)
                                         <td>{{ $bolt_tip_percent }}%</td>
-                                        <td>{{ $bolt_tip_after_vat }}&euro;</td>
+                                        <td>{{ $bolt_tip_after_vat }}€</td>
                                         @endif
                                     </tr>
                                     <tr>
                                         <th>Totais</th>
-                                        <td>{{ $total_earnings }}&euro;</td>
+                                        <td>{{ $total_earnings }}€</td>
                                         @if ($driver)
                                         <td></td>
-                                        <td>{{ number_format($total_after_vat, 2) }}&euro;</td>
+                                        <td>{{ number_format($total_after_vat, 2) }}€</td>
                                         @endif
                                     </tr>
                                 </tbody>
@@ -126,18 +139,18 @@
                                     </tr>
                                     <tr>
                                         <th>Ganhos</th>
-                                        <td>{{ number_format($total_earnings_no_tip, 2) }}&euro;</td>
+                                        <td>{{ number_format($total_earnings_no_tip, 2) }}€</td>
                                         @if ($driver)
-                                        <td>- {{ number_format($total_earnings_no_tip - $total_earnings_after_vat, 2) }}&euro;</td>
-                                        <td>{{ number_format($total_earnings_after_vat, 2) }}&euro;</td>
+                                        <td>- {{ number_format($total_earnings_no_tip - $total_earnings_after_vat, 2) }}€</td>
+                                        <td>{{ number_format($total_earnings_after_vat, 2) }}€</td>
                                         @endif
                                     </tr>
                                     <tr>
                                         <th>Gorjetas</th>
-                                        <td>{{ number_format($total_tips, 2) }}&euro;</td>
+                                        <td>{{ number_format($total_tips, 2) }}€</td>
                                         @if ($driver)
-                                        <td>- {{ number_format($total_tips - $total_tip_after_vat, 2) }}&euro;</td>
-                                        <td>{{ number_format($total_tip_after_vat, 2) }}&euro;</td>
+                                        <td>- {{ number_format($total_tips - $total_tip_after_vat, 2) }}€</td>
+                                        <td>{{ number_format($total_tip_after_vat, 2) }}€</td>
                                         @endif
                                     </tr>
                                     @if (isset($electric_expenses) && is_object($electric_expenses) && isset($electric_expenses->value)
@@ -185,22 +198,22 @@
                                     <tr>
                                         <th>Portagens</th>
                                         <td></td>
-                                        <td>- {{ number_format($toll_payments->sum('total'), 2) }}&euro;</td>
+                                        <td>- {{ number_format($toll_payments->sum('total'), 2) }}€</td>
                                         <td></td>
                                     </tr>
                                     @elseif ($toll_payments)
                                     <tr>
                                         <th>Portagens</th>
                                         <td></td>
-                                        <td>- {{ number_format(array_sum(array_column($toll_payments, 'total')), 2) }}&euro;</td>
+                                        <td>- {{ number_format(array_sum(array_column($toll_payments, 'total')), 2) }}€</td>
                                         <td></td>
                                     </tr>
                                     @endif
                                     @foreach ($adjustments as $adjustment)
                                     <tr>
                                         <th>{{ $adjustment->name }}</th>
-                                        <td>{{ $adjustment->type == 'refund' ? $adjustment->amount . '&euro;' : '' }}</td>
-                                        <td>{{ $adjustment->type == 'deduct' ? '- ' . $adjustment->amount . '&euro;' : '' }}</td>
+                                        <td>{{ $adjustment->type == 'refund' ? $adjustment->amount . '€' : '' }}</td>
+                                        <td>{{ $adjustment->type == 'deduct' ? '- ' . $adjustment->amount . '€' : '' }}</td>
                                         <td></td>
                                     </tr>
                                     @endforeach
@@ -208,16 +221,16 @@
                                     <tr>
                                         <th>Taxa administrativa</th>
                                         <td></td>
-                                        <td>- {{ number_format($txt_admin, 2) }}&euro;</td>
+                                        <td>- {{ number_format($txt_admin, 2) }}€</td>
                                         <td></td>
                                     </tr>
                                     @endif
                                     <tr>
                                         <th>Totais</th>
-                                        <th style="text-align: right;">{{ number_format($gross_credits, 2) }}&euro;</th>
+                                        <th style="text-align: right;">{{ number_format($gross_credits, 2) }}€</th>
                                         @if ($driver)
-                                        <th style="text-align: right;">- {{ number_format($gross_debts, 2) }}&euro;</th>
-                                        <th style="text-align: right;">{{ number_format($final_total, 2) }}&euro;</th>
+                                        <th style="text-align: right;">- {{ number_format($gross_debts, 2) }}€</th>
+                                        <th style="text-align: right;">{{ number_format($final_total, 2) }}€</th>
                                         @endif
                                     </tr>
                                 </tbody>
@@ -230,7 +243,7 @@
             @if ($driver_id)
             <div class="panel panel-default pay-panel">
                 <div class="panel-body">
-                    <h3 class="pay-text">Valor a pagar: <span class="pay-amount">{{ number_format($final_total, 2) }}</span>&euro;</h3>
+                    <h3 class="pay-text">Valor a pagar: <span class="pay-amount">{{ number_format($final_total, 2) }}</span>€</h3>
                     <div class="pay-actions">
                         <button class="btn btn-success"
                             onclick="recordLog({{ $tvde_week_id }}, {{ $driver_id }}, {{ $company_id }}, {{ number_format($final_total, 2, '.', '') }})"><i
@@ -342,34 +355,83 @@
         color: inherit;
     }
 
-    .drivers-list {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
+    .driver-filter {
+        position: relative;
     }
 
-    .driver-btn {
-        display: block;
+    .driver-filter-toggle {
+        width: 100%;
         border: 1px solid #cdd3d8;
-        padding: 10px;
-        text-align: center;
+        background: #fff;
+        padding: 10px 12px;
+        border-radius: 4px;
         font-weight: 700;
         text-transform: uppercase;
-        color: inherit;
-        background: #fff;
-        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
     }
 
-    .driver-btn:hover {
-        text-decoration: none;
+    .driver-filter-toggle:hover {
         background: #f1f3f5;
     }
 
-    .driver-btn.is-active {
-        background: #428bca;
-        color: #fff;
-        border-color: #428bca;
-        pointer-events: none;
+    .driver-filter-panel {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        background: #fff;
+        border: 1px solid #cdd3d8;
+        border-radius: 6px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        padding: 10px;
+        z-index: 5;
+    }
+
+    .driver-filter-search {
+        width: 100%;
+        border: 1px solid #cdd3d8;
+        border-radius: 4px;
+        padding: 6px 8px;
+        margin-bottom: 8px;
+    }
+
+    .driver-filter-options {
+        max-height: 280px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .driver-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: inherit;
+    }
+
+    .driver-option:hover {
+        background: #f1f3f5;
+        text-decoration: none;
+    }
+
+    .driver-option::before {
+        content: "•";
+        font-size: 16px;
+        line-height: 1;
+        opacity: 0.25;
+    }
+
+    .driver-option.is-selected::before {
+        content: "✓";
+        opacity: 1;
     }
 
     .board-right {
@@ -449,6 +511,49 @@
 </script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    (function () {
+        var filter = document.querySelector('[data-driver-filter]');
+        if (!filter) {
+            return;
+        }
+        var toggle = filter.querySelector('[data-driver-toggle]');
+        var panel = filter.querySelector('[data-driver-panel]');
+        var search = filter.querySelector('[data-driver-search]');
+        var options = filter.querySelector('[data-driver-options]');
+
+        function closePanel () {
+            panel.hidden = true;
+            toggle.setAttribute('aria-expanded', 'false');
+        }
+
+        toggle.addEventListener('click', function () {
+            var isHidden = panel.hidden;
+            panel.hidden = !isHidden;
+            toggle.setAttribute('aria-expanded', String(isHidden));
+            if (!panel.hidden && search) {
+                search.focus();
+                search.select();
+            }
+        });
+
+        document.addEventListener('click', function (event) {
+            if (!filter.contains(event.target)) {
+                closePanel();
+            }
+        });
+
+        if (search) {
+            search.addEventListener('input', function () {
+                var term = search.value.toUpperCase();
+                var items = options.querySelectorAll('[data-driver-label]');
+                items.forEach(function (item) {
+                    var label = item.getAttribute('data-driver-label') || '';
+                    item.style.display = label.indexOf(term) !== -1 ? '' : 'none';
+                });
+            });
+        }
+    })();
+
     function recordLog (tvde_week_id, driver_id, company_id, value) {
         Swal.fire({
             title: "Tem a certeza?",
