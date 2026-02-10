@@ -13,6 +13,11 @@
                 <form class="form-horizontal" method="POST" action="{{ route($routeName) }}">
                     {{ csrf_field() }}
                     <input type="hidden" name="filename" value="{{ $filename }}" />
+                    @if(isset($filenames) && is_array($filenames))
+                        @foreach($filenames as $storedFilename)
+                            <input type="hidden" name="filenames[]" value="{{ $storedFilename }}" />
+                        @endforeach
+                    @endif
                     <input type="hidden" name="hasHeader" value="{{ $hasHeader }}" />
                     <input type="hidden" name="modelName" value="{{ $modelName }}" />
                     <input type="hidden" name="redirect" value="{{ $redirect }}" />

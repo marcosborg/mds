@@ -12,15 +12,15 @@
                         <form class="form-horizontal" method="POST" action="{{ route($route, ['model' => $model]) }}" enctype="multipart/form-data">
                             {{ csrf_field() }}
 
-                            <div class="form-group{{ $errors->has('csv_file') ? ' has-error' : '' }}">
-                                <label for="csv_file" class="col-md-4 control-label">@lang('global.app_csv_file_to_import')</label>
+                            <div class="form-group{{ $errors->has('csv_files') || $errors->has('csv_files.*') ? ' has-error' : '' }}">
+                                <label for="csv_files" class="col-md-4 control-label">@lang('global.app_csv_file_to_import')</label>
 
                                 <div class="col-md-6">
-                                    <input id="csv_file" type="file" class="form-control" name="csv_file" required>
+                                    <input id="csv_files" type="file" class="form-control" name="csv_files[]" multiple accept=".csv" required>
 
-                                    @if($errors->has('csv_file'))
+                                    @if($errors->has('csv_files') || $errors->has('csv_files.*'))
                                         <span class="help-block">
-                                            <strong>{{ $errors->first('csv_file') }}</strong>
+                                            <strong>{{ $errors->first('csv_files') ?: $errors->first('csv_files.*') }}</strong>
                                         </span>
                                     @endif
                                 </div>

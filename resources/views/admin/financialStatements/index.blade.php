@@ -10,30 +10,42 @@
         <div class="period-block">
             <div class="period-label">ANO</div>
             <div class="period-links">
-                @foreach ($tvde_years as $tvde_year)
-                <a href="/admin/financial-statements/year/{{ $tvde_year->id }}"
-                    class="period-link {{ $tvde_year->id == $tvde_year_id ? 'is-active' : '' }}">{{ $tvde_year->name }}</a>
-                @endforeach
+                <select class="form-control select2 period-select" data-period-select="year">
+                    @foreach ($tvde_years as $tvde_year)
+                    <option value="/admin/financial-statements/year/{{ $tvde_year->id }}"
+                        {{ $tvde_year->id == $tvde_year_id ? 'selected' : '' }}>
+                        {{ $tvde_year->name }}
+                    </option>
+                    @endforeach
+                </select>
             </div>
         </div>
         <div class="period-block">
             <div class="period-label">M&Ecirc;S</div>
             <div class="period-links">
-                @foreach ($tvde_months as $tvde_month)
-                <a href="/admin/financial-statements/month/{{ $tvde_month->id }}"
-                    class="period-link {{ $tvde_month->id == $tvde_month_id ? 'is-active' : '' }}">{{ strtoupper($tvde_month->name) }}</a>
-                @endforeach
+                <select class="form-control select2 period-select" data-period-select="month">
+                    @foreach ($tvde_months as $tvde_month)
+                    <option value="/admin/financial-statements/month/{{ $tvde_month->id }}"
+                        {{ $tvde_month->id == $tvde_month_id ? 'selected' : '' }}>
+                        {{ strtoupper($tvde_month->name) }}
+                    </option>
+                    @endforeach
+                </select>
             </div>
         </div>
         <div class="period-block">
             <div class="period-label">SEMANA</div>
             <div class="period-links">
-                @foreach ($tvde_weeks as $tvde_week)
-                <a href="/admin/financial-statements/week/{{ $tvde_week->id }}"
-                    class="period-link {{ $tvde_week->id == $tvde_week_id ? 'is-active' : '' }}">Semana {{ isset($tvde_week->number) ? $tvde_week->number . ' - ' : '' }}de
-                    {{ \Carbon\Carbon::parse($tvde_week->start_date)->format('d/m') }} a
-                    {{ \Carbon\Carbon::parse($tvde_week->end_date)->format('d/m') }}</a>
-                @endforeach
+                <select class="form-control select2 period-select" data-period-select="week">
+                    @foreach ($tvde_weeks as $tvde_week)
+                    <option value="/admin/financial-statements/week/{{ $tvde_week->id }}"
+                        {{ $tvde_week->id == $tvde_week_id ? 'selected' : '' }}>
+                        Semana {{ isset($tvde_week->number) ? $tvde_week->number . ' - ' : '' }}de
+                        {{ \Carbon\Carbon::parse($tvde_week->start_date)->format('d/m') }} a
+                        {{ \Carbon\Carbon::parse($tvde_week->end_date)->format('d/m') }}
+                    </option>
+                    @endforeach
+                </select>
             </div>
         </div>
     </div>
@@ -302,14 +314,9 @@
 
     .period-links {
         margin-top: 8px;
-        display: inline-flex;
-        flex-wrap: nowrap;
-        gap: 6px;
-        overflow-x: auto;
-        padding-bottom: 4px;
-        justify-content: flex-start;
+        display: block;
         width: 100%;
-        white-space: nowrap;
+        overflow: visible;
     }
 
     .period-link {
@@ -333,6 +340,31 @@
         color: #fff;
         border-color: #428bca;
         pointer-events: none;
+    }
+
+    .period-select {
+        width: 100%;
+    }
+
+    .period-block .select2-container {
+        width: 100% !important;
+        text-align: left;
+    }
+
+    .period-block .select2-selection--single {
+        height: 38px !important;
+        display: flex !important;
+        align-items: center;
+        border-color: #cdd3d8 !important;
+    }
+
+    .period-block .select2-selection__rendered {
+        line-height: normal !important;
+        width: 100%;
+    }
+
+    .period-block .select2-selection__arrow {
+        height: 36px !important;
     }
 
     .board-main {
@@ -512,6 +544,20 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     (function () {
+        var periodSelects = $('.period-select');
+        if (periodSelects.length) {
+            periodSelects.select2({
+                width: '100%'
+            });
+
+            periodSelects.on('change', function () {
+                var targetUrl = $(this).val();
+                if (targetUrl) {
+                    window.location.href = targetUrl;
+                }
+            });
+        }
+
         var filter = document.querySelector('[data-driver-filter]');
         if (!filter) {
             return;
