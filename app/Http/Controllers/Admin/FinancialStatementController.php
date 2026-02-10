@@ -13,10 +13,10 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Http\Controllers\Traits\Reports;
-use Auth;
 use Carbon\Carbon;
 use App\Models\TvdeYear;
 use App\Models\RecordedLog;
+use Illuminate\Support\Collection;
 
 class FinancialStatementController extends Controller
 {
@@ -27,14 +27,9 @@ class FinancialStatementController extends Controller
     {
         abort_if(Gate::denies('financial_statement_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        //MANAGE SESSION
-
-        $driver_id = session()->get('driver_id') ? session()->get('driver_id') : $driver_id = 0;
-
-        if (!auth()->user()->hasRole('Admin') && $driver_id == 0) {
-            $driver_id = Driver::where('user_id', auth()->user()->id)->first()->id;
-            session()->put('driver_id', $driver_id);
-        }
+        $user = auth()->user();
+        $userCompanies = $this->getUserCompanies($user);
+        $this->ensureCompanyScope($user, $userCompanies);
 
         $filter = $this->filter();
         $company_id = $filter['company_id'];
@@ -45,23 +40,26 @@ class FinancialStatementController extends Controller
         $tvde_months = $filter['tvde_months'];
         $tvde_month_id = $filter['tvde_month_id'];
         $tvde_weeks = $filter['tvde_weeks'];
+        $driver_id = (int) (session()->get('driver_id') ?: 0);
         $drivers = $filter['drivers'];
 
-        //return $filter;
+        if (!$this->isAdmin($user)) {
+            $drivers = Driver::where('company_id', $company_id)
+                ->where('user_id', $user->id)
+                ->orderBy('name')
+                ->get()
+                ->load('user');
 
-        $user = auth()->user();
+            $allowedDriverIds = $drivers->pluck('id')->map(function ($id) {
+                return (int) $id;
+            })->toArray();
 
-        if ($user->hasRole('driver') && !$user->hasRole('owner')) {
-            $drivers = Driver::where('driver_id', session()->get('user_id'));
-        } else if ($user->hasRole('owner') && !$user->hasRole('admin')) {
-            if (Gate::allows('owner_access')) {
-                $drivers = Driver::where('company_id', $company_id)
-                    ->where('state_id', 1)
-                    ->whereHas('user', function ($user) {
-                        $user->where('id', Auth::id());
-                    })
-                    ->orderBy('name')
-                    ->get()->load('user');
+            if (count($allowedDriverIds) === 0) {
+                $driver_id = 0;
+                session()->put('driver_id', 0);
+            } elseif (!in_array($driver_id, $allowedDriverIds, true)) {
+                $driver_id = (int) $allowedDriverIds[0];
+                session()->put('driver_id', $driver_id);
             }
         }
 
@@ -174,6 +172,21 @@ class FinancialStatementController extends Controller
 
     public function year($tvde_year_id)
     {
+        $user = auth()->user();
+        if (!$this->isAdmin($user)) {
+            $company_id = (int) session()->get('company_id');
+            $allowed = TvdeYear::where('id', $tvde_year_id)
+                ->whereHas('months', function ($month) use ($company_id) {
+                    $month->whereHas('weeks', function ($week) use ($company_id) {
+                        $week->whereHas('tvdeActivities', function ($activity) use ($company_id) {
+                            $activity->where('company_id', $company_id);
+                        });
+                    });
+                })->exists();
+            if (!$allowed) {
+                return back();
+            }
+        }
 
         $currentYear = Carbon::now()->year;
         $currentMonth = Carbon::now()->month;
@@ -200,6 +213,20 @@ class FinancialStatementController extends Controller
 
     public function month($tvde_month_id)
     {
+        $user = auth()->user();
+        if (!$this->isAdmin($user)) {
+            $company_id = (int) session()->get('company_id');
+            $allowed = TvdeMonth::where('id', $tvde_month_id)
+                ->whereHas('weeks', function ($week) use ($company_id) {
+                    $week->whereHas('tvdeActivities', function ($activity) use ($company_id) {
+                        $activity->where('company_id', $company_id);
+                    });
+                })->exists();
+            if (!$allowed) {
+                return back();
+            }
+        }
+
         session()->put('tvde_month_id', $tvde_month_id);
         session()->put('tvde_week_id', TvdeWeek::orderBy('number', 'desc')->where('tvde_month_id', $tvde_month_id)->first()->id);
         return back();
@@ -207,21 +234,65 @@ class FinancialStatementController extends Controller
 
     public function week($tvde_week_id)
     {
+        $user = auth()->user();
+        if (!$this->isAdmin($user)) {
+            $company_id = (int) session()->get('company_id');
+            $allowed = TvdeWeek::where('id', $tvde_week_id)
+                ->whereHas('tvdeActivities', function ($activity) use ($company_id) {
+                    $activity->where('company_id', $company_id);
+                })->exists();
+            if (!$allowed) {
+                return back();
+            }
+        }
+
         session()->put('tvde_week_id', $tvde_week_id);
         return back();
     }
 
     public function driver($driver_id)
     {
+        $user = auth()->user();
+        $driver_id = (int) $driver_id;
+
+        if (!$this->isAdmin($user)) {
+            $company_id = (int) session()->get('company_id');
+            $allowed = Driver::where('id', $driver_id)
+                ->where('user_id', $user->id)
+                ->where('company_id', $company_id)
+                ->exists();
+            if (!$allowed) {
+                return back();
+            }
+        }
+
         session()->put('driver_id', $driver_id);
         return back();
     }
 
     public function pdf()
     {
-        $driver_id = session()->get('driver_id');
-        $company_id = session()->get('company_id');
+        $user = auth()->user();
+        $driver_id = (int) session()->get('driver_id');
+        $company_id = (int) session()->get('company_id');
         $tvde_week_id = session()->get('tvde_week_id');
+
+        if (!$this->isAdmin($user)) {
+            $allowedCompanyIds = $this->getUserCompanyIds($user);
+            if (!in_array($company_id, $allowedCompanyIds, true)) {
+                abort(Response::HTTP_FORBIDDEN, '403 Forbidden');
+            }
+
+            if ($driver_id > 0) {
+                $allowedDriver = Driver::where('id', $driver_id)
+                    ->where('user_id', $user->id)
+                    ->where('company_id', $company_id)
+                    ->exists();
+                if (!$allowedDriver) {
+                    abort(Response::HTTP_FORBIDDEN, '403 Forbidden');
+                }
+            }
+        }
 
         $all_html = '';
 
@@ -394,5 +465,66 @@ class FinancialStatementController extends Controller
         $html = view('admin.financialStatements.pdf', $data)->render();
 
         return $html;
+    }
+
+    private function isAdmin($user)
+    {
+        return $user && ($user->hasRole('Admin') || $user->hasRole('admin'));
+    }
+
+    private function getUserCompanyIds($user)
+    {
+        if ($this->isAdmin($user)) {
+            return Company::query()->pluck('id')->map(function ($id) {
+                return (int) $id;
+            })->toArray();
+        }
+
+        return Driver::where('user_id', $user->id)
+            ->whereNotNull('company_id')
+            ->distinct()
+            ->pluck('company_id')
+            ->map(function ($id) {
+                return (int) $id;
+            })
+            ->toArray();
+    }
+
+    private function getUserCompanies($user): Collection
+    {
+        if ($this->isAdmin($user)) {
+            return collect();
+        }
+
+        $companyIds = $this->getUserCompanyIds($user);
+        if (count($companyIds) === 0) {
+            return collect();
+        }
+
+        return Company::whereIn('id', $companyIds)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+    }
+
+    private function ensureCompanyScope($user, Collection $userCompanies): void
+    {
+        if ($this->isAdmin($user)) {
+            return;
+        }
+
+        if ($userCompanies->count() === 0) {
+            session()->put('company_id', 0);
+            session()->put('driver_id', 0);
+            return;
+        }
+
+        $allowedCompanyIds = $userCompanies->pluck('id')->map(function ($id) {
+            return (int) $id;
+        })->toArray();
+
+        $company_id = (int) (session()->get('company_id') ?: 0);
+        if (!in_array($company_id, $allowedCompanyIds, true)) {
+            session()->put('company_id', (int) $allowedCompanyIds[0]);
+        }
     }
 }

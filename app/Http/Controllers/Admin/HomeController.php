@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Models\Driver;
+
 class HomeController
 {
     public function index()
@@ -23,12 +25,35 @@ class HomeController
 
     public function selectCompany($company_id)
     {
-
         $user = auth()->user();
+        $company_id = (int) $company_id;
 
-        if ($user->hasRole('admin')) {
+        if ($user->hasRole('Admin') || $user->hasRole('admin')) {
             session()->forget('driver_id');
+            session()->put('company_id', $company_id);
+            return;
         }
+
+        $allowedCompanyIds = Driver::where('user_id', $user->id)
+            ->whereNotNull('company_id')
+            ->distinct()
+            ->pluck('company_id')
+            ->map(function ($id) {
+                return (int) $id;
+            })
+            ->toArray();
+
+        if (count($allowedCompanyIds) === 0) {
+            session()->put('company_id', 0);
+            session()->put('driver_id', 0);
+            return;
+        }
+
+        if (!in_array($company_id, $allowedCompanyIds, true)) {
+            $company_id = $allowedCompanyIds[0];
+        }
+
         session()->put('company_id', $company_id);
+        session()->forget('driver_id');
     }
 }

@@ -534,6 +534,7 @@
         .tables-row .col-md-6:last-child {
             padding: 0;
         }
+
     }
 </style>
 @endsection

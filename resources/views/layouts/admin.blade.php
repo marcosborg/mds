@@ -67,6 +67,24 @@
 
                 <div class="navbar-custom-menu">
                     <ul class="nav navbar-nav">
+                        @php
+                            $isAdmin = auth()->user()->hasRole('Admin') || auth()->user()->hasRole('admin');
+                            $userCompanies = collect();
+
+                            if (!$isAdmin) {
+                                $companyIds = \App\Models\Driver::where('user_id', auth()->id())
+                                    ->whereNotNull('company_id')
+                                    ->distinct()
+                                    ->pluck('company_id')
+                                    ->toArray();
+
+                                if (!empty($companyIds)) {
+                                    $userCompanies = \App\Models\Company::whereIn('id', $companyIds)
+                                        ->orderBy('name')
+                                        ->get(['id', 'name']);
+                                }
+                            }
+                        @endphp
                         @if (auth()->user()->hasRole('Admin'))
                         <li class="nav-item" style="padding-top: 8px;">
                             <select class="form-control select2" style="min-width: 200px;"
@@ -74,6 +92,16 @@
                                 <option {{ !session()->get('company_id') || session()->get('company_id') == 0 ?
                                     'selected' : '' }} value="0">Todas as empresas</option>
                                 @foreach (\App\Models\Company::all() as $company)
+                                <option {{ session()->get('company_id') && session()->get('company_id') == $company->id
+                                    ? 'selected' : '' }} value="{{ $company->id }}">{{ $company->name }}</option>
+                                @endforeach
+                            </select>
+                        </li>
+                        @elseif ($userCompanies->count() > 1)
+                        <li class="nav-item" style="padding-top: 8px;">
+                            <select class="form-control select2" style="min-width: 200px;"
+                                onchange="selectCompany(this.value)" autocomplete="off">
+                                @foreach ($userCompanies as $company)
                                 <option {{ session()->get('company_id') && session()->get('company_id') == $company->id
                                     ? 'selected' : '' }} value="{{ $company->id }}">{{ $company->name }}</option>
                                 @endforeach
