@@ -34,6 +34,9 @@
                                     {{ trans('cruds.driver.fields.user') }}
                                 </th>
                                 <th>
+                                    {{ trans('cruds.driver.fields.name') }}
+                                </th>
+                                <th>
                                     {{ trans('cruds.user.fields.email') }}
                                 </th>
                                 <th>
@@ -118,6 +121,7 @@
       { data: 'placeholder', name: 'placeholder' },
 { data: 'id', name: 'id' },
 { data: 'user_name', name: 'user.name' },
+{ data: 'name', name: 'name' },
 { data: 'user.email', name: 'user.email' },
 { data: 'vat', name: 'payment_vat' },
 { data: 'contract_type_name', name: 'contract_type.name' },
