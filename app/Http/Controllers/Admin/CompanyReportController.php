@@ -7,6 +7,7 @@ use Gate;
 use Symfony\Component\HttpFoundation\Response;
 use App\Http\Controllers\Traits\Reports;
 use Illuminate\Http\Request;
+use App\Models\TvdeWeek;
 
 class CompanyReportController extends Controller
 {
@@ -16,6 +17,24 @@ class CompanyReportController extends Controller
     public function index()
     {
         abort_if(Gate::denies('company_report_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+
+        $company_id = session()->get('company_id');
+
+        if ($company_id) {
+            $latestWeek = TvdeWeek::whereHas('tvdeActivities', function ($activity) use ($company_id) {
+                $activity->where('company_id', $company_id);
+            })
+                ->with('tvde_month')
+                ->orderBy('start_date', 'desc')
+                ->orderBy('number', 'desc')
+                ->first();
+
+            if ($latestWeek) {
+                session()->put('tvde_week_id', $latestWeek->id);
+                session()->put('tvde_month_id', $latestWeek->tvde_month_id);
+                session()->put('tvde_year_id', $latestWeek->tvde_month?->year_id);
+            }
+        }
 
         $filter = $this->filter();
         $company_id = $filter['company_id'];
