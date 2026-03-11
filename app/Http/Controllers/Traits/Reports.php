@@ -516,20 +516,43 @@ trait Reports
         }
 
         // Semana atual
-        if (session()->has('tvde_week_id')) {
-            $tvde_week_id = session()->get('tvde_week_id');
-        } else {
+        $tvde_week_id = (int) (session()->get('tvde_week_id') ?? 0);
+
+        $hasValidSelectedWeek = $tvde_week_id > 0 && TvdeWeek::where('id', $tvde_week_id)
+            ->where('tvde_month_id', $tvde_month_id)
+            ->whereHas('tvdeActivities', function ($activity) use ($company_id) {
+                $activity->where('company_id', $company_id);
+            })
+            ->exists();
+
+        if (!$hasValidSelectedWeek) {
             $tvde_week = TvdeWeek::where('tvde_month_id', $tvde_month_id)
                 ->whereHas('tvdeActivities', function ($activity) use ($company_id) {
                     $activity->where('company_id', $company_id);
                 })
+                ->orderBy('start_date', 'desc')
                 ->orderBy('number', 'desc')
                 ->first();
 
-            $tvde_week_id = $tvde_week?->id ?? 1;
+            if (!$tvde_week) {
+                $tvde_week = TvdeWeek::whereHas('tvdeActivities', function ($activity) use ($company_id) {
+                    $activity->where('company_id', $company_id);
+                })
+                    ->with('tvde_month')
+                    ->orderBy('start_date', 'desc')
+                    ->orderBy('number', 'desc')
+                    ->first();
 
-            // Salva na sessão para manter consistência
+                if ($tvde_week) {
+                    $tvde_month_id = $tvde_week->tvde_month_id;
+                    $tvde_year_id = $tvde_week->tvde_month?->year_id ?? $tvde_year_id;
+                }
+            }
+
+            $tvde_week_id = $tvde_week?->id ?? 0;
             session()->put('tvde_week_id', $tvde_week_id);
+            session()->put('tvde_month_id', $tvde_month_id);
+            session()->put('tvde_year_id', $tvde_year_id);
         }
 
         $tvde_years = TvdeYear::orderBy('name')
