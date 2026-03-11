@@ -602,16 +602,29 @@ trait Reports
     public function getWeekResults($tvde_week_id, $driver_id, $company_id)
     {
 
+        $driver = null;
         if ($driver_id != 0) {
-            $driver = Driver::find($driver_id)->load([
-                'contract_type',
-                'contract_vat'
-            ]);
-        } else {
-            $driver = null;
+            $driver = Driver::find($driver_id);
+            if ($driver) {
+                $driver->load([
+                    'contract_type',
+                    'contract_vat'
+                ]);
+            } else {
+                $driver_id = 0;
+            }
         }
 
         $tvde_week = TvdeWeek::find($tvde_week_id);
+        if (!$tvde_week) {
+            $tvde_week = TvdeWeek::whereHas('tvdeActivities', function ($activity) use ($company_id) {
+                $activity->where('company_id', $company_id);
+            })
+                ->orderBy('start_date', 'desc')
+                ->orderBy('number', 'desc')
+                ->first();
+            $tvde_week_id = $tvde_week?->id;
+        }
 
         if ($driver_id == 0) {
             $bolt_activities = TvdeActivity::where([
@@ -645,18 +658,21 @@ trait Reports
                 ->get();
         }
 
-        $adjustments = Adjustment::whereHas('drivers', function ($query) use ($driver_id) {
-            $query->where('id', $driver_id);
-        })
-            ->where(function ($query) use ($tvde_week) {
-                $query->where('start_date', '<=', $tvde_week->start_date)
-                    ->orWhereNull('start_date');
+        $adjustments = collect();
+        if ($tvde_week && $driver_id != 0) {
+            $adjustments = Adjustment::whereHas('drivers', function ($query) use ($driver_id) {
+                $query->where('id', $driver_id);
             })
-            ->where(function ($query) use ($tvde_week) {
-                $query->where('end_date', '>=', $tvde_week->end_date)
-                    ->orWhereNull('end_date');
-            })
-            ->get();
+                ->where(function ($query) use ($tvde_week) {
+                    $query->where('start_date', '<=', $tvde_week->start_date)
+                        ->orWhereNull('start_date');
+                })
+                ->where(function ($query) use ($tvde_week) {
+                    $query->where('end_date', '>=', $tvde_week->end_date)
+                        ->orWhereNull('end_date');
+                })
+                ->get();
+        }
 
         $refund = 0;
         $deduct = 0;
