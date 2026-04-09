@@ -188,7 +188,7 @@ class DriverController extends Controller
 
         $states = State::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
-        $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
+        $companies = Company::orderBy('name')->pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
         $tool_cards = TollCard::pluck('code', 'id')->prepend(trans('global.pleaseSelect'), '');
 
@@ -220,7 +220,7 @@ class DriverController extends Controller
 
         $states = State::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
-        $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
+        $companies = Company::orderBy('name')->pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
         $driver->load('user', 'card', 'electric', 'tool_card', 'local', 'contract_type', 'contract_vat', 'state', 'company');
 
@@ -265,3 +265,4 @@ class DriverController extends Controller
         return response(null, Response::HTTP_NO_CONTENT);
     }
 }
+

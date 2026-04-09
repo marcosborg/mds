@@ -27,7 +27,7 @@ class TollCardController extends Controller
     {
         abort_if(Gate::denies('toll_card_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
+        $companies = Company::orderBy('name')->pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
         return view('admin.tollCards.create', compact('companies'));
     }
@@ -43,7 +43,7 @@ class TollCardController extends Controller
     {
         abort_if(Gate::denies('toll_card_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
+        $companies = Company::orderBy('name')->pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
         $tollCard->load('company');
 
@@ -86,3 +86,4 @@ class TollCardController extends Controller
         return response(null, Response::HTTP_NO_CONTENT);
     }
 }
+

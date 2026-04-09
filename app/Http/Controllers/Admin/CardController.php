@@ -31,7 +31,7 @@ class CardController extends Controller
     {
         abort_if(Gate::denies('card_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
+        $companies = Company::orderBy('name')->pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
         return view('admin.cards.create', compact('companies'));
     }
@@ -47,7 +47,7 @@ class CardController extends Controller
     {
         abort_if(Gate::denies('card_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
+        $companies = Company::orderBy('name')->pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
         $card->load('company');
 

@@ -31,7 +31,7 @@ class ElectricController extends Controller
     {
         abort_if(Gate::denies('electric_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
+        $companies = Company::orderBy('name')->pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
         return view('admin.electrics.create', compact('companies'));
     }
@@ -47,7 +47,7 @@ class ElectricController extends Controller
     {
         abort_if(Gate::denies('electric_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
+        $companies = Company::orderBy('name')->pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
         $electric->load('company');
 

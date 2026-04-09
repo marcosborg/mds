@@ -85,7 +85,7 @@ class TvdeActivityController extends Controller
         }
 
         $tvde_weeks = TvdeWeek::all();
-        $companies = Company::all();
+        $companies = Company::orderBy('name')->get();
 
         return view('admin.tvdeActivities.index', compact('tvde_weeks', 'companies'));
     }
@@ -98,7 +98,7 @@ class TvdeActivityController extends Controller
 
         $tvde_operators = TvdeOperator::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
-        $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
+        $companies = Company::orderBy('name')->pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
         return view('admin.tvdeActivities.create', compact('companies', 'tvde_operators', 'tvde_weeks'));
     }
@@ -118,7 +118,7 @@ class TvdeActivityController extends Controller
 
         $tvde_operators = TvdeOperator::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
-        $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
+        $companies = Company::orderBy('name')->pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
         $tvdeActivity->load('tvde_week', 'tvde_operator', 'company');
 

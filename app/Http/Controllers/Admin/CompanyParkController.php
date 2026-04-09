@@ -34,7 +34,7 @@ class CompanyParkController extends Controller
 
         $tvde_weeks = TvdeWeek::pluck('start_date', 'id')->prepend(trans('global.pleaseSelect'), '');
 
-        $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
+        $companies = Company::orderBy('name')->pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
         return view('admin.companyParks.create', compact('companies', 'tvde_weeks'));
     }
@@ -52,7 +52,7 @@ class CompanyParkController extends Controller
 
         $tvde_weeks = TvdeWeek::pluck('start_date', 'id')->prepend(trans('global.pleaseSelect'), '');
 
-        $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
+        $companies = Company::orderBy('name')->pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
         $companyPark->load('tvde_week', 'company');
 
@@ -95,3 +95,4 @@ class CompanyParkController extends Controller
         return response(null, Response::HTTP_NO_CONTENT);
     }
 }
+

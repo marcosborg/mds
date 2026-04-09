@@ -27,7 +27,7 @@ class ConsultancyController extends Controller
     {
         abort_if(Gate::denies('consultancy_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
+        $companies = Company::orderBy('name')->pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
         return view('admin.consultancies.create', compact('companies'));
     }
@@ -43,7 +43,7 @@ class ConsultancyController extends Controller
     {
         abort_if(Gate::denies('consultancy_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
+        $companies = Company::orderBy('name')->pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
         $consultancy->load('company');
 

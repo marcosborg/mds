@@ -78,7 +78,7 @@ class CompanyExpenseController extends Controller
     {
         abort_if(Gate::denies('company_expense_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
+        $companies = Company::orderBy('name')->pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
         return view('admin.companyExpenses.create', compact('companies'));
     }
@@ -94,7 +94,7 @@ class CompanyExpenseController extends Controller
     {
         abort_if(Gate::denies('company_expense_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
+        $companies = Company::orderBy('name')->pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
         $companyExpense->load('company');
 
@@ -137,3 +137,4 @@ class CompanyExpenseController extends Controller
         return response(null, Response::HTTP_NO_CONTENT);
     }
 }
+

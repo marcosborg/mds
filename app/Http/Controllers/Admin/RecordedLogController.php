@@ -140,7 +140,7 @@ class RecordedLogController extends Controller
 
         $drivers = Driver::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
-        $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
+        $companies = Company::orderBy('name')->pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
         $vehicle_items = VehicleItem::pluck('license_plate', 'id')->prepend(trans('global.pleaseSelect'), '');
 
@@ -162,7 +162,7 @@ class RecordedLogController extends Controller
 
         $drivers = Driver::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
-        $companies = Company::pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
+        $companies = Company::orderBy('name')->pluck('name', 'id')->prepend(trans('global.pleaseSelect'), '');
 
         $recordedLog->load('tvde_week', 'driver', 'company');
 
@@ -207,3 +207,4 @@ class RecordedLogController extends Controller
         return response(null, Response::HTTP_NO_CONTENT);
     }
 }
+
