@@ -64,6 +64,8 @@ class FinancialStatementController extends Controller
         }
 
         //START SCRIPT
+        $canRecordFinancialStatement = $this->isAdmin($user);
+        $canViewUnrecordedFinancialStatement = $this->isAdmin($user);
 
         $recorded_log = RecordedLog::where([
             'tvde_week_id' => $tvde_week_id,
@@ -71,18 +73,25 @@ class FinancialStatementController extends Controller
             'company_id' => $company_id,
         ])->first();
 
+        $baseData = [
+            'company_id' => $company_id,
+            'tvde_year_id' => $tvde_year_id,
+            'tvde_years' => $tvde_years,
+            'tvde_months' => $tvde_months,
+            'tvde_month_id' => $tvde_month_id,
+            'tvde_weeks' => $tvde_weeks,
+            'tvde_week_id' => $tvde_week_id,
+            'drivers' => $drivers,
+            'driver_id' => $driver_id,
+            'recorded' => false,
+            'statementAvailable' => false,
+            'canRecordFinancialStatement' => $canRecordFinancialStatement,
+            'canViewUnrecordedFinancialStatement' => $canViewUnrecordedFinancialStatement,
+        ];
+
         if ($recorded_log) {
             $results = json_decode($recorded_log->data);
-            $data = [
-                'company_id' => $company_id,
-                'tvde_year_id' => $tvde_year_id,
-                'tvde_years' => $tvde_years,
-                'tvde_months' => $tvde_months,
-                'tvde_month_id' => $tvde_month_id,
-                'tvde_weeks' => $tvde_weeks,
-                'tvde_week_id' => $tvde_week_id,
-                'drivers' => $drivers,
-                'driver_id' => $driver_id,
+            $data = array_merge($baseData, [
                 'bolt_activities' => $results->bolt_activities,
                 'uber_activities' => $results->uber_activities,
                 'total_earnings_uber' => $results->total_earnings_uber,
@@ -115,19 +124,19 @@ class FinancialStatementController extends Controller
                 'txt_admin' => $results->txt_admin,
                 'toll_payments' => $results->toll_payments,
                 'recorded' => true,
-            ];
+                'statementAvailable' => true,
+            ]);
         } else {
+            if (!$canViewUnrecordedFinancialStatement) {
+                $data = array_merge($baseData, [
+                    'driver' => $drivers->firstWhere('id', $driver_id),
+                ]);
+
+                return view('admin.financialStatements.index')->with($data);
+            }
+
             $results = $this->getWeekResults($tvde_week_id, $driver_id, $company_id);
-            $data = [
-                'company_id' => $company_id,
-                'tvde_year_id' => $tvde_year_id,
-                'tvde_years' => $tvde_years,
-                'tvde_months' => $tvde_months,
-                'tvde_month_id' => $tvde_month_id,
-                'tvde_weeks' => $tvde_weeks,
-                'tvde_week_id' => $tvde_week_id,
-                'drivers' => $drivers,
-                'driver_id' => $driver_id,
+            $data = array_merge($baseData, [
                 'bolt_activities' => $results['bolt_activities'],
                 'uber_activities' => $results['uber_activities'],
                 'total_earnings_uber' => $results['total_earnings_uber'],
@@ -160,7 +169,8 @@ class FinancialStatementController extends Controller
                 'txt_admin' => $results['txt_admin'],
                 'toll_payments' => $results['toll_payments'],
                 'recorded' => false,
-            ];
+                'statementAvailable' => true,
+            ]);
         }
 
         // END SCRIPT

@@ -79,6 +79,7 @@
         </aside>
 
         <div class="board-right">
+            @if ($statementAvailable)
             <div class="row tables-row">
                 <div class="col-md-6">
                     <div class="panel panel-default table-panel">
@@ -257,9 +258,11 @@
                 <div class="panel-body">
                     <h3 class="pay-text">Valor a pagar: <span class="pay-amount">{{ number_format($final_total, 2) }}</span>€</h3>
                     <div class="pay-actions">
+                        @if ($canRecordFinancialStatement)
                         <button class="btn btn-success"
                             onclick="recordLog({{ $tvde_week_id }}, {{ $driver_id }}, {{ $company_id }}, {{ number_format($final_total, 2, '.', '') }})"><i
                                 class="fa fa-floppy-o"></i></button>
+                        @endif
                         @if ($recorded)
                         <a target="_new" href="/admin/financial-statements/pdf" class="btn btn-danger"><i
                                 class="fa fa-file-pdf-o"></i></a>
@@ -273,6 +276,14 @@
                     <div class="pay-actions" style="margin-left: auto;">
                         <a href="/admin/print-alls" class="btn btn-primary"><i class="fa fa-file-pdf-o"></i> Imprimir todos</a>
                     </div>
+                </div>
+            </div>
+            @endif
+            @else
+            <div class="panel panel-default unavailable-panel">
+                <div class="panel-body">
+                    <h3 class="unavailable-title">Extrato ainda nao disponivel.</h3>
+                    <p class="unavailable-text">Aguarde a gravacao da semana para consultar os valores.</p>
                 </div>
             </div>
             @endif
@@ -520,6 +531,21 @@
         display: flex;
         gap: 8px;
         align-items: center;
+    }
+
+    .unavailable-panel .panel-body {
+        padding: 28px;
+        text-align: center;
+    }
+
+    .unavailable-title {
+        margin: 0 0 8px;
+        font-weight: 700;
+    }
+
+    .unavailable-text {
+        margin: 0;
+        color: #666;
     }
 
     @media (max-width: 991px) {

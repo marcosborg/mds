@@ -25,6 +25,14 @@ class RecordedLogController extends Controller
 
     public function recordLog($tvde_week_id, $driver_id, $company_id, $value)
     {
+        abort_if(Gate::denies('recorded_log_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+
+        abort_unless(
+            Driver::where('id', $driver_id)->where('company_id', $company_id)->exists(),
+            Response::HTTP_FORBIDDEN,
+            '403 Forbidden'
+        );
+
         $recorded_logs = RecordedLog::where([
             'tvde_week_id' => $tvde_week_id,
             'driver_id' => $driver_id,
@@ -207,4 +215,3 @@ class RecordedLogController extends Controller
         return response(null, Response::HTTP_NO_CONTENT);
     }
 }
-
