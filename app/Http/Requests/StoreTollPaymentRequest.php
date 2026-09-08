@@ -20,6 +20,7 @@ class StoreTollPaymentRequest extends FormRequest
             'tvde_week_id' => [
                 'required',
                 'integer',
+                'exists:tvde_weeks,id',
             ],
             'card' => [
                 'string',
@@ -27,6 +28,7 @@ class StoreTollPaymentRequest extends FormRequest
             ],
             'total' => [
                 'required',
+                'numeric',
             ],
         ];
     }

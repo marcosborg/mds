@@ -484,7 +484,23 @@ trait Reports
         ]);
     }
 
-    public function filter()
+    private function scopeReportActivities($query, $companyId, bool $driverStatements): void
+    {
+        $query->where(function ($scope) use ($companyId, $driverStatements) {
+            $scope->where('company_id', $companyId);
+            if ($driverStatements) {
+                foreach ([1 => 'uber_uuid', 2 => 'bolt_name'] as $operator => $field) {
+                    $scope->orWhere(function ($activity) use ($companyId, $operator, $field) {
+                        $activity->where('tvde_operator_id', $operator)->whereIn('driver_code',
+                            Driver::select($field)->where('company_id', $companyId)
+                                ->whereNotNull($field)->where($field, '<>', '')
+                        );
+                    });
+                }
+            }
+        });
+    }
+    public function filter($driverStatements = false)
     {
         $company_id = session()->get('company_id');
 
@@ -505,9 +521,9 @@ trait Reports
             $currentMonth = date('n'); // 1 a 12
             $tvde_month = TvdeMonth::where('number', $currentMonth)
                 ->where('year_id', $tvde_year_id)
-                ->whereHas('weeks', function ($week) use ($company_id) {
-                    $week->whereHas('tvdeActivities', function ($activity) use ($company_id) {
-                        $activity->where('company_id', $company_id);
+                ->whereHas('weeks', function ($week) use ($company_id, $driverStatements) {
+                    $week->whereHas('tvdeActivities', function ($activity) use ($company_id, $driverStatements) {
+                        $this->scopeReportActivities($activity, $company_id, $driverStatements);
                     });
                 })
                 ->first();
@@ -520,23 +536,23 @@ trait Reports
 
         $hasValidSelectedWeek = $tvde_week_id > 0 && TvdeWeek::where('id', $tvde_week_id)
             ->where('tvde_month_id', $tvde_month_id)
-            ->whereHas('tvdeActivities', function ($activity) use ($company_id) {
-                $activity->where('company_id', $company_id);
+            ->whereHas('tvdeActivities', function ($activity) use ($company_id, $driverStatements) {
+                $this->scopeReportActivities($activity, $company_id, $driverStatements);
             })
             ->exists();
 
         if (!$hasValidSelectedWeek) {
             $tvde_week = TvdeWeek::where('tvde_month_id', $tvde_month_id)
-                ->whereHas('tvdeActivities', function ($activity) use ($company_id) {
-                    $activity->where('company_id', $company_id);
+                ->whereHas('tvdeActivities', function ($activity) use ($company_id, $driverStatements) {
+                    $this->scopeReportActivities($activity, $company_id, $driverStatements);
                 })
                 ->orderBy('start_date', 'desc')
                 ->orderBy('number', 'desc')
                 ->first();
 
             if (!$tvde_week) {
-                $tvde_week = TvdeWeek::whereHas('tvdeActivities', function ($activity) use ($company_id) {
-                    $activity->where('company_id', $company_id);
+                $tvde_week = TvdeWeek::whereHas('tvdeActivities', function ($activity) use ($company_id, $driverStatements) {
+                    $this->scopeReportActivities($activity, $company_id, $driverStatements);
                 })
                     ->with('tvde_month')
                     ->orderBy('start_date', 'desc')
@@ -556,26 +572,26 @@ trait Reports
         }
 
         $tvde_years = TvdeYear::orderBy('name')
-            ->whereHas('months', function ($month) use ($company_id) {
-                $month->whereHas('weeks', function ($week) use ($company_id) {
-                    $week->whereHas('tvdeActivities', function ($tvdeActivity) use ($company_id) {
-                        $tvdeActivity->where('company_id', $company_id);
+            ->whereHas('months', function ($month) use ($company_id, $driverStatements) {
+                $month->whereHas('weeks', function ($week) use ($company_id, $driverStatements) {
+                    $week->whereHas('tvdeActivities', function ($tvdeActivity) use ($company_id, $driverStatements) {
+                        $this->scopeReportActivities($tvdeActivity, $company_id, $driverStatements);
                     });
                 });
             })->get();
 
         $tvde_months = TvdeMonth::orderBy('number', 'asc')
             ->where('year_id', $tvde_year_id)
-            ->whereHas('weeks', function ($week) use ($company_id) {
-                $week->whereHas('tvdeActivities', function ($tvdeActivity) use ($company_id) {
-                    $tvdeActivity->where('company_id', $company_id);
+            ->whereHas('weeks', function ($week) use ($company_id, $driverStatements) {
+                $week->whereHas('tvdeActivities', function ($tvdeActivity) use ($company_id, $driverStatements) {
+                    $this->scopeReportActivities($tvdeActivity, $company_id, $driverStatements);
                 });
             })->get();
 
         $tvde_weeks = TvdeWeek::orderBy('number', 'asc')
             ->where('tvde_month_id', $tvde_month_id)
-            ->whereHas('tvdeActivities', function ($tvdeActivity) use ($company_id) {
-                $tvdeActivity->where('company_id', $company_id);
+            ->whereHas('tvdeActivities', function ($tvdeActivity) use ($company_id, $driverStatements) {
+                $this->scopeReportActivities($tvdeActivity, $company_id, $driverStatements);
             })->get();
 
         $tvde_week = TvdeWeek::find($tvde_week_id);
@@ -641,23 +657,10 @@ trait Reports
             ])
                 ->get();
         } else {
-            $bolt_activities = TvdeActivity::where([
-                'tvde_week_id' => $tvde_week_id,
-                'tvde_operator_id' => 2,
-                'driver_code' => $driver->bolt_name,
-                'company_id' => $company_id,
-            ])
-                ->get();
-
-            $uber_activities = TvdeActivity::where([
-                'tvde_week_id' => $tvde_week_id,
-                'tvde_operator_id' => 1,
-                'driver_code' => $driver->uber_uuid,
-                'company_id' => $company_id,
-            ])
-                ->get();
+            $revenue = app(\App\Services\DriverRevenue::class);
+            $bolt_activities = $revenue->activities($driver, $tvde_week_id, 2);
+            $uber_activities = $revenue->activities($driver, $tvde_week_id, 1);
         }
-
         $adjustments = collect();
         if ($tvde_week && $driver_id != 0) {
             $adjustments = Adjustment::whereHas('drivers', function ($query) use ($driver_id) {
@@ -727,19 +730,15 @@ trait Reports
 
         // TOLL EXPENSES
 
-        $toll_payments = null;
-        if ($driver && $driver->tool_card_id) {
-            $toll_card = TollCard::find($driver->tool_card_id);
-            $toll_payments = TollPayment::where([
-                'card' => $toll_card->code,
-                'tvde_week_id' => $tvde_week_id
-            ])->get();
+        $toll_payments = collect();
+        $statement_warnings = [];
+        if ($driver) {
+            [$toll_payments, $statement_warnings] = app(\App\Services\TollPaymentMatcher::class)->forWeek($driver, $tvde_week_id);
         }
-
-        $total_earnings_bolt = number_format($bolt_activities->sum('earnings_two') - $bolt_activities->sum('earnings_one'), 2);
-        $total_tips_bolt = number_format($bolt_activities->sum('earnings_one'), 2);
-        $total_earnings_uber = number_format($uber_activities->sum('earnings_two') - $uber_activities->sum('earnings_one'), 2);
-        $total_tips_uber = number_format($uber_activities->sum('earnings_one'), 2);
+        $total_earnings_bolt = number_format($bolt_activities->sum('earnings_two') - $bolt_activities->sum('earnings_one'), 2, '.', '');
+        $total_tips_bolt = number_format($bolt_activities->sum('earnings_one'), 2, '.', '');
+        $total_earnings_uber = number_format($uber_activities->sum('earnings_two') - $uber_activities->sum('earnings_one'), 2, '.', '');
+        $total_tips_uber = number_format($uber_activities->sum('earnings_one'), 2, '.', '');
         $total_tips = $total_tips_uber + $total_tips_bolt;
         $total_earnings = $bolt_activities->sum('earnings_two') + $uber_activities->sum('earnings_two');
         $total_earnings_no_tip = ($bolt_activities->sum('earnings_two') - $bolt_activities->sum('earnings_one')) + ($uber_activities->sum('earnings_two') - $uber_activities->sum('earnings_one'));
@@ -760,14 +759,14 @@ trait Reports
 
         $total_earnings_after_vat = $total_bolt + $total_uber;
 
-        $total_bolt = number_format(($bolt_activities->sum('earnings_two') - $bolt_activities->sum('earnings_one')) * ($contract_type_rank ? $contract_type_rank->percent / 100 : 0), 2);
-        $total_uber = number_format(($uber_activities->sum('earnings_two') - $uber_activities->sum('earnings_one')) * ($contract_type_rank ? $contract_type_rank->percent / 100 : 0), 2);
+        $total_bolt = number_format(($bolt_activities->sum('earnings_two') - $bolt_activities->sum('earnings_one')) * ($contract_type_rank ? $contract_type_rank->percent / 100 : 0), 2, '.', '');
+        $total_uber = number_format(($uber_activities->sum('earnings_two') - $uber_activities->sum('earnings_one')) * ($contract_type_rank ? $contract_type_rank->percent / 100 : 0), 2, '.', '');
 
         $bolt_tip_percent = $driver ? 100 - $driver->contract_vat->tips : 100;
         $uber_tip_percent = $driver ? 100 - $driver->contract_vat->tips : 100;
 
-        $bolt_tip_after_vat = number_format($total_tips_bolt * ($bolt_tip_percent / 100), 2);
-        $uber_tip_after_vat = number_format($total_tips_uber * ($uber_tip_percent / 100), 2);
+        $bolt_tip_after_vat = number_format($total_tips_bolt * ($bolt_tip_percent / 100), 2, '.', '');
+        $uber_tip_after_vat = number_format($total_tips_uber * ($uber_tip_percent / 100), 2, '.', '');
 
         $total_tip_after_vat = $bolt_tip_after_vat + $uber_tip_after_vat;
 
@@ -826,7 +825,17 @@ trait Reports
             $txt_admin = 0;
         }
 
+        $revenue_by_company = app(\App\Services\DriverRevenue::class)->breakdown(
+            $uber_activities, $bolt_activities, (float) ($contract_type_rank->percent ?? 0), (float) $uber_tip_percent
+        );
+        if ($driver && (count($revenue_by_company) > 1 || collect($revenue_by_company)->contains(fn ($row) => (int) $row['company_id'] !== (int) $company_id)) && $adjustments->where('type', 'refund')->isNotEmpty()) {
+            $statement_warnings[] = 'A faturação importada de outras empresas já está incluída. Reveja os créditos manuais de faturação para evitar duplicações; nenhum ajuste foi removido.';
+        }
+
         return [
+            'statement_scope' => $driver ? 'driver' : 'company',
+            'revenue_by_company' => $revenue_by_company,
+            'statement_warnings' => $statement_warnings,
             'bolt_activities' => $bolt_activities,
             'uber_activities' => $uber_activities,
             'total_earnings_uber' => $total_earnings_uber,
@@ -835,7 +844,7 @@ trait Reports
             'total_earnings_bolt' => $total_earnings_bolt,
             'total_bolt' => $total_bolt,
             'total_tips_uber' => $total_tips_uber,
-            'uber_tip_percent' => $total_tips_uber,
+            'uber_tip_percent' => $uber_tip_percent,
             'uber_tip_after_vat' => $uber_tip_after_vat,
             'total_tips_bolt' => $total_tips_bolt,
             'bolt_tip_percent' => $bolt_tip_percent,

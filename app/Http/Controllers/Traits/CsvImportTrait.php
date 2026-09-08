@@ -28,6 +28,7 @@ trait CsvImportTrait
 
             $importedFiles = 0;
             $failedFiles   = 0;
+            $importErrors = [];
 
             foreach ($filenames as $filename) {
                 $path = storage_path('app/csv_import/' . $filename);
@@ -41,6 +42,9 @@ trait CsvImportTrait
                     $importedFiles++;
                 } catch (\Exception $ex) {
                     $failedFiles++;
+                    if ($ex instanceof \Illuminate\Validation\ValidationException) {
+                        $importErrors = array_merge($importErrors, $ex->validator->errors()->all());
+                    }
                     Log::error('CSV import failed for file.', [
                         'filename'  => $filename,
                         'modelName' => $modelName,
@@ -54,7 +58,7 @@ trait CsvImportTrait
             }
 
             if ($failedFiles > 0) {
-                session()->flash('message', $importedFiles . ' ficheiros CSV importados com sucesso. Alguns ficheiros nao foram importados. Ver logs.');
+                session()->flash('message', $importedFiles . ' ficheiros CSV importados com sucesso. Alguns ficheiros não foram importados. ' . implode(' ', array_unique($importErrors)));
             } else {
                 session()->flash('message', $importedFiles . ' ficheiros CSV importados com sucesso');
             }
@@ -155,6 +159,28 @@ trait CsvImportTrait
         }
 
         $for_insert = array_chunk($insert, 100);
+
+        if ($model === \App\Models\TollPayment::class) {
+            // Validate the entire file before writing any row. Model events
+            // persist the resolved driver, even if their name/card later changes.
+            return \Illuminate\Support\Facades\DB::transaction(function () use ($insert) {
+                foreach ($insert as $row => $values) {
+                    try {
+                        validator($values, [
+                            'card' => 'required|string',
+                            'tvde_week_id' => 'required|exists:tvde_weeks,id',
+                            'total' => 'required|numeric',
+                        ])->validate();
+                        \App\Models\TollPayment::create($values);
+                    } catch (\Illuminate\Validation\ValidationException $exception) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'card' => 'Registo ' . ($row + 1) . ': ' . implode(' ', $exception->validator->errors()->all()),
+                        ]);
+                    }
+                }
+                return count($insert);
+            });
+        }
 
         foreach ($for_insert as $insert_item) {
             $model::insert($insert_item);

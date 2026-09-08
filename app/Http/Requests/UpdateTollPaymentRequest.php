@@ -20,6 +20,7 @@ class UpdateTollPaymentRequest extends FormRequest
             'tvde_week_id' => [
                 'required',
                 'integer',
+                'exists:tvde_weeks,id',
             ],
             'card' => [
                 'string',
@@ -27,6 +28,7 @@ class UpdateTollPaymentRequest extends FormRequest
             ],
             'total' => [
                 'required',
+                'numeric',
             ],
         ];
     }

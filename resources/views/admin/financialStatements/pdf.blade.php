@@ -59,6 +59,7 @@
 </head>
 
 <body>
+    @include('admin.financialStatements.revenueByCompany')
     <table>
         <tbody>
             <tr>

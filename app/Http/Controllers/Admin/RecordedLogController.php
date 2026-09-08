@@ -33,42 +33,56 @@ class RecordedLogController extends Controller
             '403 Forbidden'
         );
 
-        $recorded_logs = RecordedLog::where([
-            'tvde_week_id' => $tvde_week_id,
-            'driver_id' => $driver_id,
-            'company_id' => $company_id,
-        ])->get();
-
-        // Check if any logs exist and delete them
-        if ($recorded_logs->isNotEmpty()) {
-            foreach ($recorded_logs as $log) {
-                $log->delete();
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($tvde_week_id, $driver_id, $company_id) {
+            Driver::whereKey($driver_id)->lockForUpdate()->firstOrFail();
+            $results = $this->getWeekResults($tvde_week_id, $driver_id, $company_id);
+            foreach ($results['statement_warnings'] as $warning) {
+                if (str_starts_with($warning, 'Portagem #')) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['statement' => $warning]);
+                }
             }
-        }
+            $recorded_logs = RecordedLog::where('tvde_week_id', $tvde_week_id)
+                ->where('driver_id', $driver_id)->get();
+            foreach ($recorded_logs as $log) {
+                if ((int) $log->company_id !== (int) $company_id
+                    && data_get(json_decode($log->data), 'statement_scope') !== 'driver') {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'statement' => 'Existe um extrato antigo noutra empresa nesta semana. Reveja-o antes de gravar um extrato consolidado para evitar pagamento duplicado.',
+                    ]);
+                }
+            }
+            $value = round($results['final_total'], 2);
+            // Check if any logs exist and delete them
+            if ($recorded_logs->isNotEmpty()) {
+                foreach ($recorded_logs as $log) {
+                    $log->delete();
+                }
+            }
 
-        $lastRecord = RecordedLog::orderBy('id', 'desc')->first();
+            $lastRecord = RecordedLog::orderBy('id', 'desc')->first();
 
-        if ($lastRecord) {
-            $balance = $lastRecord->balance + $value;
-        } else {
-            $balance = $value;
-        }
+            if ($lastRecord) {
+                $balance = $lastRecord->balance + $value;
+            } else {
+                $balance = $value;
+            }
 
-        //Check if has vehicle item
+            //Check if has vehicle item
 
-        $vehicle_item = VehicleItem::where('driver_id', $driver_id)->first();
+            $vehicle_item = VehicleItem::where('driver_id', $driver_id)->first();
 
-        $recorded_log = new RecordedLog;
-        $recorded_log->tvde_week_id = $tvde_week_id;
-        $recorded_log->driver_id = $driver_id;
-        $recorded_log->company_id = $company_id;
-        $recorded_log->vehicle_item_id = $vehicle_item ? $vehicle_item->id : null;
-        $recorded_log->value = $value;
-        $recorded_log->balance = $balance;
-        $recorded_log->data = json_encode($this->getWeekResults($tvde_week_id, $driver_id, $company_id), true);
-        $recorded_log->save();
+            $recorded_log = new RecordedLog;
+            $recorded_log->tvde_week_id = $tvde_week_id;
+            $recorded_log->driver_id = $driver_id;
+            $recorded_log->company_id = $company_id;
+            $recorded_log->vehicle_item_id = $vehicle_item ? $vehicle_item->id : null;
+            $recorded_log->value = $value;
+            $recorded_log->balance = $balance;
+            $recorded_log->data = json_encode($results, JSON_UNESCAPED_UNICODE);
+            $recorded_log->save();
 
-        return $recorded_log;
+            return $recorded_log;
+        });
     }
 
     public function index(Request $request)

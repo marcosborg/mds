@@ -11,6 +11,21 @@ class TollPayment extends Model
 {
     use SoftDeletes, HasFactory;
 
+    protected static function booted()
+    {
+        static::saving(function (self $payment) {
+            if (!$payment->exists || $payment->isDirty('card') || !$payment->driver_id) {
+                $payment->card = trim((string) $payment->card);
+                $payment->driver_id = app(\App\Services\TollPaymentMatcher::class)->resolve($payment->card)->id;
+            }
+        });
+    }
+
+    public function driver()
+    {
+        return $this->belongsTo(Driver::class);
+    }
+
     public $table = 'toll_payments';
 
     protected $dates = [

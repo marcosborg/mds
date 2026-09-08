@@ -80,6 +80,7 @@
 
         <div class="board-right">
             @if ($statementAvailable)
+            @include('admin.financialStatements.revenueByCompany')
             <div class="row tables-row">
                 <div class="col-md-6">
                     <div class="panel panel-default table-panel">
@@ -650,7 +651,12 @@
                     });
                 }, (err) => {
                     $.LoadingOverlay('hide');
-                    console.log(err);
+                    const errors = err.responseJSON && err.responseJSON.errors;
+                    Swal.fire({
+                        title: 'Não foi possível gravar',
+                        text: errors ? Object.values(errors).flat().join(' ') : 'Verifique os dados do extrato e tente novamente.',
+                        icon: 'error'
+                    });
                 });
             }
         });

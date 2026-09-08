@@ -111,16 +111,27 @@ class DatabaseCopyCommand extends Command
                     throw new \RuntimeException("No columns found for {$tableName}");
                 }
 
-                $source->table($tableName)
-                    ->orderBy($orderColumn)
-                    ->chunk(500, function ($rows) use ($target, $tableName) {
+                $query = $source->table($tableName)->orderBy($orderColumn);
+                // Pivot tables may share timestamps. Stable ordering prevents
+                // offset pagination from skipping or repeating different rows.
+                if ($orderColumn !== 'id') {
+                    foreach ($source->select("SHOW COLUMNS FROM `{$tableName}`") as $column) {
+                        if ($column->Field !== $orderColumn) {
+                            $query->orderBy($column->Field);
+                        }
+                    }
+                }
+                $query->chunk(25, function ($rows) use ($target, $tableName) {
                         $payload = $rows->map(fn($row) => (array) $row)->toArray();
                         if (!empty($payload)) {
                             $target->table($tableName)->insert($payload);
                         }
                     });
             } catch (\Throwable $e) {
-                $this->warn("{$tableName}: {$e->getMessage()}");
+                // Query exceptions may contain copied personal data and secrets.
+                $this->error("{$tableName}: copy failed (code {$e->getCode()}).");
+                DB::purge($targetConnection);
+                return 1;
             }
         }
 

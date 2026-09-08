@@ -31,7 +31,7 @@ class FinancialStatementController extends Controller
         $userCompanies = $this->getUserCompanies($user);
         $this->ensureCompanyScope($user, $userCompanies);
 
-        $filter = $this->filter();
+        $filter = $this->filter(true);
         $company_id = $filter['company_id'];
         $tvde_week_id = $filter['tvde_week_id'];
         $tvde_week = $filter['tvde_week'];
@@ -67,11 +67,7 @@ class FinancialStatementController extends Controller
         $canRecordFinancialStatement = $this->isAdmin($user);
         $canViewUnrecordedFinancialStatement = $this->isAdmin($user);
 
-        $recorded_log = RecordedLog::where([
-            'tvde_week_id' => $tvde_week_id,
-            'driver_id' => $driver_id,
-            'company_id' => $company_id,
-        ])->first();
+        $recorded_log = app(\App\Services\StatementSnapshot::class)->find($tvde_week_id, $driver_id, $company_id);
 
         $baseData = [
             'company_id' => $company_id,
@@ -123,6 +119,8 @@ class FinancialStatementController extends Controller
                 'total_earnings_after_vat' => $results->total_earnings_after_vat,
                 'txt_admin' => $results->txt_admin,
                 'toll_payments' => $results->toll_payments,
+                'revenue_by_company' => $results->revenue_by_company ?? [],
+                'statement_warnings' => $results->statement_warnings ?? [],
                 'recorded' => true,
                 'statementAvailable' => true,
             ]);
@@ -168,6 +166,8 @@ class FinancialStatementController extends Controller
                 'total_earnings_after_vat' => $results['total_earnings_after_vat'],
                 'txt_admin' => $results['txt_admin'],
                 'toll_payments' => $results['toll_payments'],
+                'revenue_by_company' => $results['revenue_by_company'],
+                'statement_warnings' => $results['statement_warnings'],
                 'recorded' => false,
                 'statementAvailable' => true,
             ]);
@@ -189,7 +189,7 @@ class FinancialStatementController extends Controller
                 ->whereHas('months', function ($month) use ($company_id) {
                     $month->whereHas('weeks', function ($week) use ($company_id) {
                         $week->whereHas('tvdeActivities', function ($activity) use ($company_id) {
-                            $activity->where('company_id', $company_id);
+                            $this->scopeReportActivities($activity, $company_id, true);
                         });
                     });
                 })->exists();
@@ -229,7 +229,7 @@ class FinancialStatementController extends Controller
             $allowed = TvdeMonth::where('id', $tvde_month_id)
                 ->whereHas('weeks', function ($week) use ($company_id) {
                     $week->whereHas('tvdeActivities', function ($activity) use ($company_id) {
-                        $activity->where('company_id', $company_id);
+                        $this->scopeReportActivities($activity, $company_id, true);
                     });
                 })->exists();
             if (!$allowed) {
@@ -249,7 +249,7 @@ class FinancialStatementController extends Controller
             $company_id = (int) session()->get('company_id');
             $allowed = TvdeWeek::where('id', $tvde_week_id)
                 ->whereHas('tvdeActivities', function ($activity) use ($company_id) {
-                    $activity->where('company_id', $company_id);
+                    $this->scopeReportActivities($activity, $company_id, true);
                 })->exists();
             if (!$allowed) {
                 return back();
@@ -369,13 +369,10 @@ class FinancialStatementController extends Controller
 
         //START SCRIPT
 
-        $recorded_log = RecordedLog::where([
-            'tvde_week_id' => $tvde_week_id,
-            'driver_id' => $driver_id,
-            'company_id' => $company_id,
-        ])->first();
+        $recorded_log = app(\App\Services\StatementSnapshot::class)->find($tvde_week_id, $driver_id, $company_id);
 
         if ($recorded_log) {
+            $company = Company::find($recorded_log->company_id) ?? $company;
             $results = json_decode($recorded_log->data);
             $chart1 = "https://quickchart.io/chart?c={type:'bar',data:{labels:" . json_encode($labels) . ",datasets:[{borderWidth: 1, label:'Valor faturado',data:" . json_encode($earnings) . "}]}}";
             $chart2 = "https://quickchart.io/chart?c={type:'doughnut',data:{labels:['UBER', 'BOLT', 'GORJETAS'],datasets:[{label: 'Valor faturado', data: [" . $results->total_earnings_uber . ", " . $results->total_earnings_bolt . ", " . $results->total_tips . "]}]}}";
@@ -415,6 +412,8 @@ class FinancialStatementController extends Controller
                 'total_earnings_after_vat' => $results->total_earnings_after_vat,
                 'txt_admin' => $results->txt_admin,
                 'toll_payments' => $results->toll_payments,
+                'revenue_by_company' => $results->revenue_by_company ?? [],
+                'statement_warnings' => $results->statement_warnings ?? [],
                 'recorded' => true,
                 'chart1' => $chart1,
                 'chart2' => $chart2,
@@ -461,6 +460,8 @@ class FinancialStatementController extends Controller
                 'total_earnings_after_vat' => $results['total_earnings_after_vat'],
                 'txt_admin' => $results['txt_admin'],
                 'toll_payments' => $results['toll_payments'],
+                'revenue_by_company' => $results['revenue_by_company'],
+                'statement_warnings' => $results['statement_warnings'],
                 'recorded' => false,
                 'chart1' => $chart1,
                 'chart2' => $chart2,
