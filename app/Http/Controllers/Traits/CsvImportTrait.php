@@ -15,7 +15,16 @@ trait CsvImportTrait
         try {
             $hasHeader = $request->input('hasHeader', false);
             $fields = $request->input('fields', false);
-            $fields = array_flip(array_filter($fields));
+            $fields = array_filter((array) $fields);
+            if ($this instanceof \App\Http\Controllers\Admin\AdjustmentController || $request->input('modelName') === 'Adjustment') {
+                abort_unless($this instanceof \App\Http\Controllers\Admin\AdjustmentController, 422);
+                abort_unless(\Illuminate\Support\Facades\Gate::allows('adjustment_create'), 403);
+                abort_unless($request->input('modelName') === 'Adjustment', 422);
+                if (count($fields) !== count(array_unique($fields))) {
+                    return redirect()->route('admin.adjustments.index')->with('message', 'Cada campo só pode ser associado a uma coluna.');
+                }
+            }
+            $fields = array_flip($fields);
 
             $modelName = $request->input('modelName', false);
             $model     = 'App\\Models\\' . $modelName;
@@ -30,7 +39,7 @@ trait CsvImportTrait
             $failedFiles   = 0;
             $importErrors = [];
 
-            foreach ($filenames as $filename) {
+            foreach ($filenames as $fileIndex => $filename) {
                 $path = storage_path('app/csv_import/' . $filename);
 
                 try {
@@ -43,7 +52,9 @@ trait CsvImportTrait
                 } catch (\Exception $ex) {
                     $failedFiles++;
                     if ($ex instanceof \Illuminate\Validation\ValidationException) {
-                        $importErrors = array_merge($importErrors, $ex->validator->errors()->all());
+                        foreach ($ex->validator->errors()->all() as $error) {
+                            $importErrors[] = 'Ficheiro ' . ($fileIndex + 1) . ': ' . $error;
+                        }
                     }
                     Log::error('CSV import failed for file.', [
                         'filename'  => $filename,
@@ -128,6 +139,9 @@ trait CsvImportTrait
 
         $model     = new $fullModelName();
         $fillables = $model->getFillable();
+        if ($model instanceof \App\Models\Adjustment) {
+            $fillables[] = 'drivers';
+        }
 
         $redirect = url()->previous();
 
@@ -156,6 +170,10 @@ trait CsvImportTrait
             if (count($tmp) > 0) {
                 $insert[] = $tmp;
             }
+        }
+
+        if ($model === \App\Models\Adjustment::class && isset($fields['drivers'])) {
+            return app(\App\Services\AdjustmentCsvImport::class)->save($insert, (int) session('company_id'), $hasHeader ? 2 : 1);
         }
 
         $for_insert = array_chunk($insert, 100);

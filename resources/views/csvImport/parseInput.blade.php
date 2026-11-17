@@ -45,7 +45,7 @@
                                     <select name="fields[{{ $key }}]">
                                         <option value=''>Please select</option>
                                         @foreach($fillables as $k => $fillable)
-                                            <option value="{{ $fillable }}" {{ strtolower($header) === strtolower($fillable) ? 'selected' : '' }}>{{ $fillable }}</option>
+                                            <option value="{{ $fillable }}" {{ strtolower(trim($header)) === strtolower($fillable) ? 'selected' : '' }}>{{ $modelName === 'Adjustment' ? (['drivers' => 'Motorista (nome)', 'name' => 'Nome do ajuste'][$fillable] ?? $fillable) : $fillable }}</option>
                                         @endforeach
                                     </select>
                                 </td>
